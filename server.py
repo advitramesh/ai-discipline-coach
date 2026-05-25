@@ -1,22 +1,21 @@
 import json
-from flask import Flask, request, jsonify
+from fastapi import FastAPI, Request, HTTPException
 from supabase import create_client
-from coach_api import get_coach_reply, insert_log, handleCoachResponse  # Import handleCoachResponse
 
-app = Flask(__name__)
+app = FastAPI()
 
 # Initialize Supabase client
 supabase_url = "your_supabase_url"
 supabase_key = "your_supabase_key"
 supabase = create_client(supabase_url, supabase_key)
 
-@app.route('/api/coach', methods=['POST'])
-async def coach():
-    data = request.get_json()
+@app.post('/api/coach')
+async def coach(request: Request):
+    data = await request.json()
     user_message = data.get('message')
 
     if not user_message:
-        return jsonify({"error": "No message provided"}), 400
+        raise HTTPException(status_code=400, detail="No message provided")
 
     # Get coach's reply (this is a placeholder for actual logic)
     coach_reply = get_coach_reply(user_message)
@@ -24,14 +23,11 @@ async def coach():
     # Log the conversation
     insert_log(user_message, coach_reply)
 
-    # Call handleCoachResponse after generating the coach_reply
-    await handleCoachResponse(user_message, coach_reply)  # Add this line
-
     response = {
         "message": coach_reply
     }
 
-    return jsonify(response), 200
+    return response
 
 def get_coach_reply(message):
     # Placeholder function to simulate getting a reply from the coach
@@ -48,6 +44,3 @@ def insert_log(user_message, coach_reply):
         print(f"Error inserting log: {response.error}")
     else:
         print("Log inserted successfully")
-
-if __name__ == '__main__':
-    app.run(debug=True)
