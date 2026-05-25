@@ -1,12 +1,17 @@
 import json
 from fastapi import FastAPI, Request, HTTPException
 from supabase import create_client
+import os
 
 app = FastAPI()
 
-# Initialize Supabase client
-supabase_url = "your_supabase_url"
-supabase_key = "your_supabase_key"
+# Initialize Supabase client using environment variables
+supabase_url = os.getenv('SUPABASE_URL')
+supabase_key = os.getenv('SUPABASE_KEY')
+
+if not supabase_url or not supabase_key:
+    raise ValueError("Supabase URL and key must be set as environment variables")
+
 supabase = create_client(supabase_url, supabase_key)
 
 @app.post('/api/coach')
