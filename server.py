@@ -3,6 +3,7 @@ import os
 from datetime import date, datetime, timedelta, timezone
 from dotenv import load_dotenv
 from fastapi import FastAPI, Request, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
 from supabase import create_client
 import google.generativeai as genai
 from groq import Groq
@@ -11,6 +12,13 @@ import requests as http_requests
 load_dotenv()
 
 app = FastAPI()
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 # --- Supabase ---
 supabase_url = os.getenv('SUPABASE_URL')

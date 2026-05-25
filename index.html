@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>Coach</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <!-- SCREEN: Onboarding -->
+  <div id="screen-onboarding" class="screen">
+
+    <div id="step-1" class="step active">
+      <div class="brand">
+        <div class="brand-logo">⚡</div>
+        <h1 class="brand-name">Coach</h1>
+        <p class="brand-tagline">Your discipline coach</p>
+      </div>
+      <div class="form-group">
+        <label for="goal-input">What is your main goal?</label>
+        <textarea id="goal-input" placeholder="Be specific. e.g. Run 5km every day without skipping." rows="3"></textarea>
+        <button id="goal-btn" class="btn">Continue →</button>
+      </div>
+    </div>
+
+    <div id="step-2" class="step">
+      <h2>How do you want to be coached?</h2>
+      <div class="style-cards">
+        <button class="style-card" data-style="tough love">
+          <span class="style-icon">💪</span>
+          <div class="style-text">
+            <strong>Tough Love</strong>
+            <p>Direct, no fluff, challenging</p>
+          </div>
+        </button>
+        <button class="style-card" data-style="balanced">
+          <span class="style-icon">⚖️</span>
+          <div class="style-text">
+            <strong>Balanced</strong>
+            <p>Warm but honest, encouraging</p>
+          </div>
+        </button>
+        <button class="style-card" data-style="gentle">
+          <span class="style-icon">🌱</span>
+          <div class="style-text">
+            <strong>Gentle</strong>
+            <p>Empathetic, patient, self-compassion</p>
+          </div>
+        </button>
+      </div>
+    </div>
+
+    <div id="step-3" class="step">
+      <div class="confirm-icon">✅</div>
+      <h2>You're all set.</h2>
+      <p class="confirm-sub">Let's build some discipline.</p>
+      <button id="start-btn" class="btn">Start Coaching</button>
+    </div>
+
+  </div>
+
+  <!-- SCREEN: Chat -->
+  <div id="screen-chat" class="screen hidden">
+    <header class="topbar">
+      <div class="topbar-left">
+        <span class="topbar-logo">⚡</span>
+        <span class="topbar-title">Coach</span>
+      </div>
+      <button id="stats-btn" class="icon-btn" title="Your progress">🏆</button>
+    </header>
+    <div id="messages" class="messages"></div>
+    <div class="input-bar">
+      <textarea id="msg-input" placeholder="Message your coach…" rows="1"></textarea>
+      <button id="send-btn" class="send-btn" aria-label="Send">↑</button>
+    </div>
+  </div>
+
+  <!-- SCREEN: Stats -->
+  <div id="screen-stats" class="screen hidden">
+    <header class="topbar">
+      <button id="back-btn" class="icon-btn">←</button>
+      <span class="topbar-title">Your Progress</span>
+      <span style="width:36px"></span>
+    </header>
+    <div class="stats-body">
+      <div class="streak-hero">
+        <div class="streak-flame">🔥</div>
+        <div id="streak-num" class="streak-num">0</div>
+        <div class="streak-label">day streak</div>
+      </div>
+      <div id="motivation-line" class="motivation-line"></div>
+      <div class="stat-cards">
+        <div class="stat-card">
+          <div class="stat-label">Your Goal</div>
+          <div id="s-goal" class="stat-val">—</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Coaching Style</div>
+          <div id="s-style" class="stat-val">—</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Total Check-ins</div>
+          <div id="s-checkins" class="stat-val">0</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
