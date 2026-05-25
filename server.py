@@ -1,4 +1,6 @@
+from __future__ import annotations
 import os
+from datetime import date, datetime, timedelta, timezone
 from dotenv import load_dotenv
 from fastapi import FastAPI, Request, HTTPException
 from supabase import create_client
@@ -10,144 +12,370 @@ load_dotenv()
 
 app = FastAPI()
 
-# Supabase
+# --- Supabase ---
 supabase_url = os.getenv('SUPABASE_URL')
 supabase_key = os.getenv('SUPABASE_KEY')
 if not supabase_url or not supabase_key:
-    raise ValueError("Supabase URL and key must be set as environment variables")
+    raise ValueError("SUPABASE_URL and SUPABASE_KEY must be set")
 supabase = create_client(supabase_url, supabase_key)
 
-# Gemini
+# --- Gemini ---
 gemini_api_key = os.getenv('GEMINI_API_KEY')
 if gemini_api_key:
     genai.configure(api_key=gemini_api_key)
 
-# Groq
+# --- Groq ---
 groq_api_key = os.getenv('GROQ_API_KEY')
 groq_client = Groq(api_key=groq_api_key) if groq_api_key else None
 
 OLLAMA_URL = "http://localhost:11434"
-SYSTEM_PROMPT = "You are a supportive and motivating AI coach. Help the user achieve their goals with clear, actionable advice."
 MAX_HISTORY = 10
 
-# In-memory conversation history keyed by session_id
+# In-memory stores
 conversation_history: dict[str, list] = {}
+onboarding_state: dict[str, int] = {}  # 0=ask goal, 1=ask style, 2+=done
+onboarding_data: dict[str, dict] = {}  # temp storage during onboarding
+
+COACHING_SYSTEM_PROMPT = """You are an elite personal discipline coach specializing in habit formation,
+motivation, and helping people recover from lapses and relapses. You combine
+the science of behavior change with the empathy of a trusted mentor.
+
+COACHING PHILOSOPHY:
+- A lapse is a single slip. A relapse is a pattern. Never treat them the same.
+- Shame kills progress. Curiosity heals it. Always ask why, never judge.
+- Your job is not to motivate with hype. It is to help the user understand
+  themselves deeply enough that motivation becomes natural.
+- Progress is non-linear. Normalize struggle without excusing avoidance.
+
+USER CONTEXT:
+- Goal: {user_goal}
+- Coaching style preference: {coaching_style}
+- Current streak: {streak_days} days
+- Last check-in: {last_checkin}
+- Recent lapse history: {lapse_summary}
+
+For MOTIVATION: Connect to deeper why. Use implementation intentions.
+For LAPSE: Acknowledge, get curious about trigger, find smallest re-entry point.
+For RELAPSE: Slow down, explore if goal needs adjusting, rebuild smaller.
+For CHECK-IN: Acknowledge they showed up, ask one powerful question, reflect patterns.
+
+TONE: tough love = direct and challenging. balanced = warm but honest.
+gentle = empathetic and patient.
+
+RESPONSE RULES:
+- Under 150 words unless user is in crisis
+- End with one question or one concrete action
+- Never give a list. One thing done well.
+- No corporate wellness speak."""
+
+INTENT_CLASSIFIER_PROMPT = """Classify the following user message into exactly one of these intents:
+checkin, motivation, lapse, relapse, general
+
+Return only the single word. Nothing else.
+
+Message: {message}"""
 
 
-@app.get('/health')
-async def health():
-    providers = {}
+# =============================================================================
+# LLM PROVIDERS
+# =============================================================================
 
-    providers['gemini'] = bool(gemini_api_key)
-    providers['groq'] = bool(groq_api_key)
-
-    try:
-        resp = http_requests.get(f"{OLLAMA_URL}/api/tags", timeout=3)
-        providers['ollama'] = resp.status_code == 200
-    except Exception:
-        providers['ollama'] = False
-
-    return {"providers": providers}
-
-
-@app.post('/api/coach')
-async def coach(request: Request):
-    data = await request.json()
-    user_message = data.get('message')
-    session_id = data.get('session_id')
-
-    if not user_message:
-        raise HTTPException(status_code=400, detail="No message provided")
-    if not session_id:
-        raise HTTPException(status_code=400, detail="No session_id provided")
-
-    coach_reply, provider = get_coach_reply(session_id, user_message)
-    insert_log(session_id, user_message, coach_reply, provider)
-
-    return {"message": coach_reply, "provider": provider}
-
-
-def get_coach_reply(session_id: str, user_message: str) -> tuple[str, str]:
-    history = conversation_history.setdefault(session_id, [])
-    history.append({"role": "user", "content": user_message})
-
-    # Keep only the last MAX_HISTORY messages
-    if len(history) > MAX_HISTORY:
-        conversation_history[session_id] = history[-MAX_HISTORY:]
-        history = conversation_history[session_id]
-
-    provider_chain = [
+def call_llm(messages: list, system_prompt: str) -> tuple[str, str]:
+    """Try Gemini → Groq → Ollama in order. Returns (reply, provider_name)."""
+    providers = [
         ("gemini", _call_gemini),
         ("groq", _call_groq),
         ("ollama", _call_ollama),
     ]
-
     last_error = None
-    for provider_name, provider_fn in provider_chain:
+    for name, fn in providers:
         try:
-            reply = provider_fn(history)
-            history.append({"role": "assistant", "content": reply})
-            return reply, provider_name
+            return fn(messages, system_prompt), name
         except Exception as e:
-            print(f"{provider_name} failed: {e}")
+            print(f"{name} failed: {e}")
             last_error = e
+    raise RuntimeError(f"All providers failed. Last error: {last_error}")
 
-    raise HTTPException(status_code=503, detail=f"All providers failed. Last error: {last_error}")
 
-
-def _call_gemini(history: list) -> str:
+def _call_gemini(messages: list, system_prompt: str) -> str:
     if not gemini_api_key:
         raise RuntimeError("GEMINI_API_KEY not set")
-
-    # Gemini uses role "model" for assistant turns; history passed to start_chat excludes current message
     gemini_history = [
         {"role": "user" if m["role"] == "user" else "model", "parts": [m["content"]]}
-        for m in history[:-1]
+        for m in messages[:-1]
     ]
-    model = genai.GenerativeModel(
-        model_name="gemini-2.5-flash",
-        system_instruction=SYSTEM_PROMPT,
-    )
+    model = genai.GenerativeModel(model_name="gemini-2.5-flash", system_instruction=system_prompt)
     chat = model.start_chat(history=gemini_history)
-    response = chat.send_message(history[-1]["content"])
-    return response.text
+    return chat.send_message(messages[-1]["content"]).text
 
 
-def _call_groq(history: list) -> str:
+def _call_groq(messages: list, system_prompt: str) -> str:
     if not groq_client:
         raise RuntimeError("GROQ_API_KEY not set")
-
-    messages = [{"role": "system", "content": SYSTEM_PROMPT}] + [
-        {"role": m["role"], "content": m["content"]} for m in history
-    ]
-    response = groq_client.chat.completions.create(
-        model="llama-3.3-70b-versatile",
-        messages=messages,
-    )
+    full = [{"role": "system", "content": system_prompt}] + messages
+    response = groq_client.chat.completions.create(model="llama-3.3-70b-versatile", messages=full)
     return response.choices[0].message.content
 
 
-def _call_ollama(history: list) -> str:
-    messages = [{"role": "system", "content": SYSTEM_PROMPT}] + [
-        {"role": m["role"], "content": m["content"]} for m in history
-    ]
+def _call_ollama(messages: list, system_prompt: str) -> str:
+    full = [{"role": "system", "content": system_prompt}] + messages
     response = http_requests.post(
         f"{OLLAMA_URL}/api/chat",
-        json={"model": "llama3:8b", "messages": messages, "stream": False},
+        json={"model": "llama3:8b", "messages": full, "stream": False},
         timeout=60,
     )
     response.raise_for_status()
     return response.json()["message"]["content"]
 
 
-def insert_log(session_id: str, user_message: str, coach_reply: str, provider: str):
+# =============================================================================
+# INTENT CLASSIFICATION
+# =============================================================================
+
+def classify_intent(message: str) -> str:
+    valid = {"checkin", "motivation", "lapse", "relapse", "general"}
     try:
-        supabase.table('chat_logs').insert({
-            'session_id': session_id,
-            'user_message': user_message,
-            'coach_reply': coach_reply,
-            'provider': provider,
-        }).execute()
-        print(f"Log inserted successfully (provider: {provider})")
+        reply, _ = call_llm(
+            [{"role": "user", "content": INTENT_CLASSIFIER_PROMPT.format(message=message)}],
+            "You are a message classifier. Return only the classification word.",
+        )
+        intent = reply.strip().lower()
+        return intent if intent in valid else "general"
+    except Exception:
+        return "general"
+
+
+# =============================================================================
+# SUPABASE HELPERS
+# =============================================================================
+
+def get_user_profile(session_id: str) -> dict | None:
+    try:
+        result = supabase.table("user_profiles").select("*").eq("session_id", session_id).execute()
+        return result.data[0] if result.data else None
     except Exception as e:
-        print(f"Error inserting log: {e}")
+        print(f"Error fetching profile: {e}")
+        return None
+
+
+def save_user_profile(session_id: str, user_goal: str, coaching_style: str):
+    try:
+        supabase.table("user_profiles").insert({
+            "session_id": session_id,
+            "user_goal": user_goal,
+            "coaching_style": coaching_style,
+            "streak_days": 0,
+            "last_checkin": None,
+        }).execute()
+    except Exception as e:
+        print(f"Error saving profile: {e}")
+
+
+def update_profile_streak(session_id: str, streak_days: int):
+    try:
+        supabase.table("user_profiles").update({
+            "streak_days": streak_days,
+            "last_checkin": datetime.now(timezone.utc).isoformat(),
+        }).eq("session_id", session_id).execute()
+    except Exception as e:
+        print(f"Error updating streak: {e}")
+
+
+def log_chat(session_id: str, user_message: str, coach_reply: str, provider: str, intent: str):
+    try:
+        supabase.table("chat_logs").insert({
+            "session_id": session_id,
+            "user_message": user_message,
+            "coach_reply": coach_reply,
+            "provider_used": provider,
+            "intent": intent,
+        }).execute()
+    except Exception as e:
+        print(f"Error logging chat: {e}")
+
+
+def calculate_streak(session_id: str) -> int:
+    try:
+        result = (
+            supabase.table("chat_logs")
+            .select("created_at")
+            .eq("session_id", session_id)
+            .order("created_at", desc=True)
+            .execute()
+        )
+        if not result.data:
+            return 0
+        days_with_messages = {row["created_at"][:10] for row in result.data}
+        streak = 0
+        check = date.today()
+        while str(check) in days_with_messages:
+            streak += 1
+            check -= timedelta(days=1)
+        return streak
+    except Exception as e:
+        print(f"Error calculating streak: {e}")
+        return 0
+
+
+def get_lapse_summary(session_id: str) -> str:
+    try:
+        result = (
+            supabase.table("chat_logs")
+            .select("intent, created_at")
+            .eq("session_id", session_id)
+            .in_("intent", ["lapse", "relapse"])
+            .order("created_at", desc=True)
+            .limit(3)
+            .execute()
+        )
+        if not result.data:
+            return "None"
+        return "; ".join(f"{r['intent']} on {r['created_at'][:10]}" for r in result.data)
+    except Exception as e:
+        print(f"Error fetching lapse summary: {e}")
+        return "Unknown"
+
+
+# =============================================================================
+# ONBOARDING
+# =============================================================================
+
+_STYLE_KEYWORDS = {
+    "tough": "tough love",
+    "tough love": "tough love",
+    "balanced": "balanced",
+    "gentle": "gentle",
+}
+
+
+def parse_coaching_style(message: str) -> str:
+    lower = message.lower()
+    for keyword, style in _STYLE_KEYWORDS.items():
+        if keyword in lower:
+            return style
+    return "balanced"
+
+
+def handle_onboarding(session_id: str, user_message: str) -> dict | None:
+    """
+    Returns a response dict if still in onboarding, None if onboarding just completed
+    and the request should fall through to the full coaching flow.
+    """
+    step = onboarding_state.get(session_id, 0)
+
+    if step == 0:
+        onboarding_state[session_id] = 1
+        return {
+            "reply": "What's the one goal you're committed to working on? Be specific.",
+            "provider_used": "system",
+            "intent": "onboarding",
+            "streak_days": 0,
+        }
+
+    if step == 1:
+        onboarding_data.setdefault(session_id, {})["goal"] = user_message
+        onboarding_state[session_id] = 2
+        return {
+            "reply": (
+                "Got it. How do you want me to coach you?\n\n"
+                "- **Tough love** — direct, no fluff, I'll challenge you\n"
+                "- **Balanced** — warm but honest\n"
+                "- **Gentle** — patient and compassionate\n\n"
+                "Which style fits you best?"
+            ),
+            "provider_used": "system",
+            "intent": "onboarding",
+            "streak_days": 0,
+        }
+
+    if step == 2:
+        style = parse_coaching_style(user_message)
+        goal = onboarding_data.get(session_id, {}).get("goal", "Not specified")
+        save_user_profile(session_id, goal, style)
+        onboarding_state[session_id] = 3
+        onboarding_data.pop(session_id, None)
+        return None  # fall through to coaching flow
+
+
+# =============================================================================
+# ENDPOINTS
+# =============================================================================
+
+@app.get("/health")
+async def health():
+    providers = {
+        "gemini": bool(gemini_api_key),
+        "groq": bool(groq_api_key),
+    }
+    try:
+        resp = http_requests.get(f"{OLLAMA_URL}/api/tags", timeout=3)
+        providers["ollama"] = resp.status_code == 200
+    except Exception:
+        providers["ollama"] = False
+    return {"providers": providers}
+
+
+@app.post("/api/coach")
+async def coach(request: Request):
+    data = await request.json()
+    session_id = data.get("session_id")
+    user_message = data.get("message")
+
+    if not session_id:
+        raise HTTPException(status_code=400, detail="session_id is required")
+    if not user_message:
+        raise HTTPException(status_code=400, detail="message is required")
+
+    profile = get_user_profile(session_id)
+
+    # Onboarding: run if no profile exists yet
+    if not profile:
+        onboarding_response = handle_onboarding(session_id, user_message)
+        if onboarding_response is not None:
+            return onboarding_response
+        # Step 2 just completed — fetch the newly created profile
+        profile = get_user_profile(session_id)
+        if not profile:
+            raise HTTPException(status_code=500, detail="Failed to create user profile")
+
+    # Classify intent before generating the response
+    intent = classify_intent(user_message)
+
+    # Update conversation history
+    history = conversation_history.setdefault(session_id, [])
+    history.append({"role": "user", "content": user_message})
+    if len(history) > MAX_HISTORY:
+        conversation_history[session_id] = history[-MAX_HISTORY:]
+        history = conversation_history[session_id]
+
+    # Build dynamic system prompt
+    streak = calculate_streak(session_id)
+    lapse_summary = get_lapse_summary(session_id)
+    last_checkin = profile.get("last_checkin") or "Never"
+    if last_checkin != "Never":
+        last_checkin = last_checkin[:10]
+
+    system_prompt = COACHING_SYSTEM_PROMPT.format(
+        user_goal=profile.get("user_goal", "Not set"),
+        coaching_style=profile.get("coaching_style", "balanced"),
+        streak_days=streak,
+        last_checkin=last_checkin,
+        lapse_summary=lapse_summary,
+    )
+
+    try:
+        reply, provider = call_llm(history, system_prompt)
+    except RuntimeError as e:
+        raise HTTPException(status_code=503, detail=str(e))
+
+    history.append({"role": "assistant", "content": reply})
+
+    update_profile_streak(session_id, streak)
+    log_chat(session_id, user_message, reply, provider, intent)
+
+    return {
+        "reply": reply,
+        "provider_used": provider,
+        "intent": intent,
+        "streak_days": streak,
+    }
