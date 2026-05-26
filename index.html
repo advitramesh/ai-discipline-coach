@@ -7,16 +7,15 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
   <style>
-    /* ── RESET ─────────────────────────────────────────────────────────────── */
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-    /* ── TOKENS ─────────────────────────────────────────────────────────────── */
     :root {
       --bg:        #0F0F0F;
       --card:      #1A1A1A;
       --purple:    #6C63FF;
       --success:   #00C48C;
       --danger:    #FF6B6B;
+      --warning:   #FFA500;
       --text:      #FFFFFF;
       --secondary: #A0A0A0;
       --border:    #2A2A2A;
@@ -28,7 +27,7 @@
     body { display: flex; justify-content: center; }
     .hidden { display: none !important; }
 
-    /* ── ONBOARDING OVERLAY ─────────────────────────────────────────────────── */
+    /* ── ONBOARDING ─────────────────────────────────────────────────────────── */
     #onboarding {
       position: fixed; inset: 0; z-index: 100;
       background: var(--bg);
@@ -65,7 +64,6 @@
     .btn:active { transform: scale(0.98); }
     .btn:disabled { opacity: 0.4; cursor: not-allowed; }
 
-    /* Style cards */
     .style-cards { display: flex; flex-direction: column; gap: 0.75rem; width: 100%; margin-bottom: 1.25rem; }
 
     .style-card {
@@ -82,7 +80,6 @@
     .style-card-title { font-size: 0.75rem; font-weight: 700; letter-spacing: 0.1em; color: var(--purple); margin-bottom: 0.3rem; }
     .style-card-desc  { font-size: 0.88rem; color: var(--secondary); }
 
-    /* Step 3 */
     .checkmark-circle {
       width: 80px; height: 80px; border-radius: 50%; background: var(--success);
       display: flex; align-items: center; justify-content: center;
@@ -159,10 +156,14 @@
     .style-badge.balanced   { background: rgba(108,99,255,0.15);  color: var(--purple); }
     .style-badge.gentle     { background: rgba(0,196,140,0.15);   color: var(--success); }
 
-    /* ── CHAT WRAPPER ───────────────────────────────────────────────────────── */
-    #chat-wrapper { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+    /* ── SCREENS ────────────────────────────────────────────────────────────── */
+    .screen {
+      flex: 1; min-height: 0;
+      display: flex; flex-direction: column;
+      overflow: hidden;
+    }
 
-    /* ── MOOD SELECTOR ──────────────────────────────────────────────────────── */
+    /* ── CHAT SCREEN ────────────────────────────────────────────────────────── */
     #mood-selector {
       flex-shrink: 0; background: var(--card);
       border-bottom: 1px solid var(--border);
@@ -191,7 +192,6 @@
     .mood-emoji { font-size: 1.4rem; line-height: 1; margin-bottom: 0.2rem; }
     .mood-label { color: var(--secondary); font-size: 0.58rem; font-weight: 500; text-align: center; }
 
-    /* ── CHECK-IN CARD ──────────────────────────────────────────────────────── */
     #checkin-card {
       flex-shrink: 0; margin: 0.9rem 1rem 0;
       background: var(--card); border: 1px solid var(--border);
@@ -211,7 +211,6 @@
     }
     .btn-sm:hover { opacity: 0.88; }
 
-    /* ── MESSAGES ───────────────────────────────────────────────────────────── */
     #messages {
       flex: 1; overflow-y: auto; padding: 1rem;
       display: flex; flex-direction: column; gap: 0.75rem;
@@ -236,13 +235,14 @@
 
     .pill { border-radius: 6px; font-size: 0.63rem; font-weight: 600; letter-spacing: 0.04em; padding: 0.18rem 0.5rem; text-transform: uppercase; }
     .pill-provider { background: rgba(255,255,255,0.07); color: var(--secondary); }
-    .pill-intent            { background: rgba(255,255,255,0.07); color: var(--secondary); }
-    .pill-intent.checkin    { background: rgba(99,149,255,0.15);  color: #6395FF; }
-    .pill-intent.motivation { background: rgba(0,196,140,0.15);   color: var(--success); }
-    .pill-intent.lapse      { background: rgba(255,165,0,0.15);   color: #FFA500; }
-    .pill-intent.relapse    { background: rgba(255,107,107,0.15); color: var(--danger); }
+    .pill-intent              { background: rgba(255,255,255,0.07); color: var(--secondary); }
+    .pill-intent.checkin      { background: rgba(99,149,255,0.15);  color: #6395FF; }
+    .pill-intent.motivation   { background: rgba(0,196,140,0.15);   color: var(--success); }
+    .pill-intent.lapse        { background: rgba(255,165,0,0.15);   color: var(--warning); }
+    .pill-intent.relapse      { background: rgba(255,107,107,0.15); color: var(--danger); }
+    .pill-intent.task_request { background: rgba(108,99,255,0.15);  color: var(--purple); }
+    .pill-intent.task_update  { background: rgba(0,196,140,0.15);   color: var(--success); }
 
-    /* Loading dots */
     .dots-bubble {
       align-self: flex-start;
       background: var(--card); border: 1px solid var(--border);
@@ -257,7 +257,6 @@
     .dot:nth-child(2) { animation-delay: 0.2s; }
     .dot:nth-child(3) { animation-delay: 0.4s; }
 
-    /* ── BOTTOM BAR ─────────────────────────────────────────────────────────── */
     #bottom-bar {
       flex-shrink: 0; display: flex; align-items: flex-end; gap: 0.6rem;
       background: var(--bg); border-top: 1px solid var(--border);
@@ -286,6 +285,122 @@
     #send-btn:active  { transform: scale(0.92); }
     #send-btn:disabled { opacity: 0.35; cursor: not-allowed; }
 
+    /* ── COMMITMENTS SCREEN ─────────────────────────────────────────────────── */
+    #screen-commitments {
+      overflow-y: auto;
+      padding: 1rem;
+      gap: 0.6rem;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .section-label {
+      font-size: 0.68rem; font-weight: 700; letter-spacing: 0.12em;
+      color: var(--secondary); text-transform: uppercase;
+      padding: 0.5rem 0 0.1rem;
+    }
+
+    .cc {
+      background: var(--card); border: 1px solid var(--border);
+      border-radius: var(--r-card); padding: 1rem 1.1rem;
+      display: flex; flex-direction: column; gap: 0.6rem;
+      animation: fadeUp 0.2s ease;
+      transition: opacity 300ms;
+    }
+    .cc.logged { opacity: 0.55; }
+
+    .cc-top {
+      display: flex; align-items: flex-start;
+      justify-content: space-between; gap: 0.5rem;
+    }
+    .cc-top-left { display: flex; align-items: flex-start; gap: 0.45rem; flex: 1; min-width: 0; }
+
+    .cc-type {
+      flex-shrink: 0; margin-top: 2px;
+      font-size: 0.58rem; font-weight: 700; letter-spacing: 0.07em;
+      text-transform: uppercase; border-radius: 5px; padding: 0.18rem 0.45rem;
+    }
+    .cc-type.do       { background: rgba(108,99,255,0.2); color: var(--purple); }
+    .cc-type.abstain  { background: rgba(255,107,107,0.2); color: var(--danger); }
+    .cc-type.one-time { background: rgba(0,196,140,0.2); color: var(--success); }
+
+    .cc-title { font-size: 0.92rem; font-weight: 600; line-height: 1.3; }
+
+    .cc-streak { font-size: 0.8rem; font-weight: 700; white-space: nowrap; flex-shrink: 0; }
+    .cc-streak.do       { color: var(--success); }
+    .cc-streak.abstain  { color: var(--warning); }
+    .cc-streak.one-time { color: var(--secondary); }
+
+    .cc-bottom { display: flex; align-items: center; justify-content: space-between; }
+
+    .cc-freq { font-size: 0.72rem; color: var(--secondary); }
+
+    .cc-actions { display: flex; gap: 0.4rem; }
+
+    .cc-btn {
+      border: none; border-radius: 10px; cursor: pointer;
+      font-family: 'Inter', sans-serif; font-size: 0.75rem; font-weight: 600;
+      padding: 0.38rem 0.72rem; transition: opacity 150ms, transform 100ms;
+    }
+    .cc-btn:active { transform: scale(0.94); }
+    .cc-btn:disabled { opacity: 0.35; cursor: not-allowed; transform: none; }
+    .cc-btn.done   { background: rgba(0,196,140,0.15); color: var(--success); }
+    .cc-btn.lapsed { background: rgba(255,107,107,0.15); color: var(--danger); }
+    .cc-btn.done:not(:disabled):hover   { background: rgba(0,196,140,0.28); }
+    .cc-btn.lapsed:not(:disabled):hover { background: rgba(255,107,107,0.28); }
+
+    .cc-status-chip {
+      font-size: 0.73rem; font-weight: 600; border-radius: 10px;
+      padding: 0.35rem 0.72rem;
+    }
+    .cc-status-chip.completed { background: rgba(0,196,140,0.12); color: var(--success); }
+    .cc-status-chip.lapsed    { background: rgba(255,107,107,0.12); color: var(--danger); }
+    .cc-status-chip.skipped   { background: rgba(160,160,160,0.1); color: var(--secondary); }
+
+    .empty-state {
+      display: flex; flex-direction: column; align-items: center;
+      text-align: center; padding: 3.5rem 1.5rem; gap: 0.7rem;
+    }
+    .empty-icon  { font-size: 2.5rem; }
+    .empty-title { font-size: 1rem; font-weight: 700; }
+    .empty-sub   { font-size: 0.83rem; color: var(--secondary); line-height: 1.55; }
+
+    .cc-skeleton {
+      background: linear-gradient(90deg, var(--card) 25%, #222 50%, var(--card) 75%);
+      background-size: 200% 100%;
+      animation: shimmer 1.3s infinite;
+      border-radius: var(--r-card); height: 82px;
+    }
+
+    /* ── TAB BAR ────────────────────────────────────────────────────────────── */
+    #tab-bar {
+      flex-shrink: 0; display: flex;
+      background: var(--bg); border-top: 1px solid var(--border);
+      padding-bottom: max(0.4rem, env(safe-area-inset-bottom));
+    }
+
+    .tab-btn {
+      flex: 1; background: none; border: none; color: var(--secondary);
+      cursor: pointer; display: flex; flex-direction: column;
+      align-items: center; gap: 0.22rem;
+      padding: 0.65rem 0.5rem 0.45rem;
+      font-family: 'Inter', sans-serif;
+      position: relative; transition: color 150ms;
+    }
+    .tab-btn.active { color: var(--purple); }
+
+    .tab-icon  { font-size: 1.25rem; line-height: 1; }
+    .tab-label { font-size: 0.62rem; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; }
+
+    .tab-badge {
+      position: absolute; top: 0.38rem; right: calc(50% - 0.75rem - 8px);
+      background: var(--danger); color: #fff;
+      font-size: 0.58rem; font-weight: 700;
+      min-width: 15px; height: 15px; border-radius: 8px;
+      padding: 0 0.28rem;
+      display: flex; align-items: center; justify-content: center;
+    }
+
     /* ── ANIMATIONS ─────────────────────────────────────────────────────────── */
     @keyframes fadeUp  { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
     @keyframes popIn   { 0% { transform: scale(0) rotate(-15deg); opacity: 0; } 100% { transform: scale(1) rotate(0); opacity: 1; } }
@@ -293,11 +408,12 @@
       0%, 80%, 100% { opacity: 0.3; transform: scale(0.8); }
       40%           { opacity: 1;   transform: scale(1); }
     }
+    @keyframes shimmer { 0% { background-position: -200% 0; } 100% { background-position: 200% 0; } }
   </style>
 </head>
 <body>
 
-  <!-- ── STATS DRAWER ─────────────────────────────────────────────────────── -->
+  <!-- ── STATS DRAWER (fixed overlay) ─────────────────────────────────────── -->
   <div id="stats-drawer">
     <button class="drawer-close" id="drawer-close">✕</button>
     <div class="drawer-streak-num" id="drawer-streak">0</div>
@@ -317,7 +433,6 @@
 
   <!-- ── ONBOARDING ───────────────────────────────────────────────────────── -->
   <div id="onboarding">
-    <!-- Step 1: Goal -->
     <div id="ob-1" class="ob-step active">
       <h1 class="ob-heading">What's your goal?</h1>
       <p class="ob-sub">Be specific. Vague goals get vague results.</p>
@@ -326,7 +441,6 @@
       <button id="ob-continue" class="btn">Continue</button>
     </div>
 
-    <!-- Step 2: Style -->
     <div id="ob-2" class="ob-step">
       <h1 class="ob-heading">How should I coach you?</h1>
       <p class="ob-sub">Choose your coaching style.</p>
@@ -347,7 +461,6 @@
       <button id="ob-letsgo" class="btn hidden">Let's Go</button>
     </div>
 
-    <!-- Step 3: Confirmation -->
     <div id="ob-3" class="ob-step">
       <div class="checkmark-circle">✓</div>
       <h1 class="ob-heading">You're all set.</h1>
@@ -362,9 +475,8 @@
       <button id="streak-btn">🔥 <span id="streak-count">0</span></button>
     </header>
 
-    <div id="chat-wrapper">
-
-      <!-- Mood Selector -->
+    <!-- Chat Screen -->
+    <div id="screen-chat" class="screen">
       <div id="mood-selector">
         <div class="mood-header">
           <span class="mood-heading">How are you showing up today?</span>
@@ -389,7 +501,6 @@
         </div>
       </div>
 
-      <!-- Check-in Card -->
       <div id="checkin-card">
         <div class="checkin-flame">🔥</div>
         <div class="checkin-title">Check in for today</div>
@@ -397,18 +508,33 @@
         <button class="btn-sm" id="checkin-btn">Start Check-in</button>
       </div>
 
-      <!-- Messages -->
       <div id="messages"></div>
+
+      <div id="bottom-bar">
+        <textarea id="msg-input" placeholder="Message your coach…" rows="1"></textarea>
+        <button id="send-btn">→</button>
+      </div>
     </div>
 
-    <div id="bottom-bar">
-      <textarea id="msg-input" placeholder="Message your coach…" rows="1"></textarea>
-      <button id="send-btn">→</button>
-    </div>
+    <!-- Commitments Screen -->
+    <div id="screen-commitments" class="screen hidden"></div>
+
+    <!-- Tab Bar -->
+    <nav id="tab-bar">
+      <button class="tab-btn active" data-tab="chat">
+        <span class="tab-icon">💬</span>
+        <span class="tab-label">Chat</span>
+      </button>
+      <button class="tab-btn" data-tab="commitments" id="tab-commitments-btn">
+        <span class="tab-icon">✓</span>
+        <span class="tab-label">Commitments</span>
+        <span class="tab-badge hidden" id="chase-badge">0</span>
+      </button>
+    </nav>
   </div>
 
   <script>
-    const API = 'http://localhost:8000';
+    const API   = 'http://localhost:8000';
     const today = () => new Date().toISOString().slice(0, 10);
 
     // ── Persisted state ────────────────────────────────────────────────────────
@@ -422,6 +548,20 @@
       localStorage.setItem('session_id', sessionId);
     }
 
+    // Today's commitment logs: { [id]: 'completed' | 'lapsed' | 'skipped' }
+    // Keyed by commitment id; reset each day
+    function getTodayLogs() {
+      const raw = JSON.parse(localStorage.getItem('today_logs') || '{}');
+      if (raw._date !== today()) return {};
+      return raw;
+    }
+    function setTodayLog(id, status) {
+      const logs = getTodayLogs();
+      logs._date = today();
+      logs[id] = status;
+      localStorage.setItem('today_logs', JSON.stringify(logs));
+    }
+
     // ── DOM ────────────────────────────────────────────────────────────────────
     const $ob        = document.getElementById('onboarding');
     const $app       = document.getElementById('app');
@@ -433,6 +573,9 @@
     const $drawer    = document.getElementById('stats-drawer');
     const $moodSel   = document.getElementById('mood-selector');
     const $checkin   = document.getElementById('checkin-card');
+    const $scrChat   = document.getElementById('screen-chat');
+    const $scrComm   = document.getElementById('screen-commitments');
+    const $chaseBadge = document.getElementById('chase-badge');
 
     // ── Boot ───────────────────────────────────────────────────────────────────
     if (profile?.onboarding_complete) {
@@ -454,7 +597,6 @@
         document.getElementById(`ob-${n}`).classList.add('active');
       }
 
-      // Step 1 — goal
       const $goal = document.getElementById('ob-goal');
       document.getElementById('ob-continue').addEventListener('click', () => {
         const val = $goal.value.trim();
@@ -466,7 +608,6 @@
         if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); document.getElementById('ob-continue').click(); }
       });
 
-      // Step 2 — style
       const $letsgo = document.getElementById('ob-letsgo');
       document.querySelectorAll('.style-card').forEach(card => {
         card.addEventListener('click', () => {
@@ -481,15 +622,12 @@
         $letsgo.disabled = true;
         $letsgo.textContent = 'Setting up…';
 
-        // Show step 3
         document.getElementById('ob-echo').textContent = `"${pendingGoal}"`;
         showStep(3);
 
-        // Save profile
         profile = { goal: pendingGoal, coaching_style: pendingStyle, onboarding_complete: true };
         localStorage.setItem('coach_profile', JSON.stringify(profile));
 
-        // Wire up backend + hold for 2s visual minimum
         await Promise.all([
           (async () => {
             try {
@@ -518,6 +656,8 @@
       setupMood();
       setupCheckin();
       setupInput();
+      setupTabs();
+      updateChaseBadge();
 
       if (sessionStorage.getItem('first_chat') === '1') {
         sessionStorage.removeItem('first_chat');
@@ -527,10 +667,7 @@
       }
     }
 
-    // ── Header ─────────────────────────────────────────────────────────────────
-    function updateHeader() {
-      $streakCnt.textContent = streakDays;
-    }
+    function updateHeader() { $streakCnt.textContent = streakDays; }
 
     // ── Stats drawer ───────────────────────────────────────────────────────────
     function setupDrawer() {
@@ -619,6 +756,21 @@
       $msgInput.focus();
     }
 
+    // ── Tabs ───────────────────────────────────────────────────────────────────
+    function setupTabs() {
+      document.querySelectorAll('.tab-btn').forEach(btn => {
+        btn.addEventListener('click', () => switchTab(btn.dataset.tab));
+      });
+    }
+
+    function switchTab(name) {
+      document.querySelectorAll('.tab-btn').forEach(b => b.classList.toggle('active', b.dataset.tab === name));
+      $scrChat.classList.toggle('hidden', name !== 'chat');
+      $scrComm.classList.toggle('hidden', name !== 'commitments');
+      if (name === 'commitments') loadCommitments();
+      if (name === 'chat') $msgInput.focus();
+    }
+
     // ==========================================================================
     // CHAT
     // ==========================================================================
@@ -644,6 +796,11 @@
           updateHeader();
         }
         localStorage.setItem('last_message_date', today());
+
+        // New commitment was auto-saved — refresh badge and list
+        if (data.intent === 'task_request') {
+          setTimeout(() => updateChaseBadge(), 600);
+        }
 
       } catch (_) {
         loader.remove();
@@ -678,7 +835,7 @@
         }
         if (intent && intent !== 'onboarding') {
           const p = Object.assign(document.createElement('span'), { className: `pill pill-intent ${intent}` });
-          p.textContent = intent;
+          p.textContent = intent.replace('_', ' ');
           pills.appendChild(p);
         }
         row.appendChild(pills);
@@ -696,6 +853,187 @@
     }
 
     function scrollBottom() { $messages.scrollTop = $messages.scrollHeight; }
+
+    // ==========================================================================
+    // COMMITMENTS
+    // ==========================================================================
+    async function loadCommitments() {
+      $scrComm.innerHTML = '';
+
+      // Skeleton while loading
+      for (let i = 0; i < 2; i++) {
+        const sk = document.createElement('div');
+        sk.className = 'cc-skeleton';
+        $scrComm.appendChild(sk);
+      }
+
+      try {
+        const res = await fetch(`${API}/api/commitments/${sessionId}`);
+        if (!res.ok) throw new Error();
+        const { commitments } = await res.json();
+        renderCommitments(commitments);
+      } catch (_) {
+        $scrComm.innerHTML = '';
+        const err = document.createElement('div');
+        err.className = 'empty-state';
+        err.innerHTML = `<div class="empty-icon">⚠️</div>
+          <div class="empty-title">Couldn't load commitments</div>
+          <div class="empty-sub">Check your server is running.</div>`;
+        $scrComm.appendChild(err);
+      }
+    }
+
+    function renderCommitments(commitments) {
+      $scrComm.innerHTML = '';
+      const logs = getTodayLogs();
+
+      const dueToday = commitments.filter(c => c.due_today);
+      const other    = commitments.filter(c => !c.due_today);
+
+      if (commitments.length === 0) {
+        const el = document.createElement('div');
+        el.className = 'empty-state';
+        el.innerHTML = `<div class="empty-icon">🎯</div>
+          <div class="empty-title">No commitments yet</div>
+          <div class="empty-sub">Tell your coach what you want to commit to and it'll show up here automatically.</div>`;
+        $scrComm.appendChild(el);
+        return;
+      }
+
+      if (dueToday.length > 0) {
+        addSectionLabel('Today');
+        dueToday.forEach(c => $scrComm.appendChild(buildCard(c, logs[c.id])));
+      }
+
+      if (other.length > 0) {
+        addSectionLabel('All Commitments');
+        other.forEach(c => $scrComm.appendChild(buildCard(c, null, false)));
+      } else if (dueToday.length > 0) {
+        addSectionLabel('All Commitments');
+        const el = document.createElement('div');
+        el.style.cssText = 'color: var(--secondary); font-size: 0.83rem; padding: 0.5rem 0;';
+        el.textContent = 'Everything is due today.';
+        $scrComm.appendChild(el);
+      }
+    }
+
+    function addSectionLabel(text) {
+      const el = document.createElement('div');
+      el.className = 'section-label';
+      el.textContent = text;
+      $scrComm.appendChild(el);
+    }
+
+    function buildCard(c, loggedStatus, showActions = true) {
+      const card = document.createElement('div');
+      const alreadyLogged = !!loggedStatus;
+      card.className = `cc${alreadyLogged ? ' logged' : ''}`;
+
+      const isAbstain  = c.type === 'abstain';
+      const isOneTime  = c.type === 'one-time';
+      const streakIcon = isAbstain ? '✨' : isOneTime ? '' : '🔥';
+      const streakLabel = isAbstain
+        ? `${streakIcon} ${c.streak}d clean`
+        : c.streak > 0 ? `${streakIcon} ${c.streak}d` : '';
+
+      const freqLabel = formatFreq(c);
+
+      card.innerHTML = `
+        <div class="cc-top">
+          <div class="cc-top-left">
+            <span class="cc-type ${c.type}">${c.type}</span>
+            <span class="cc-title">${escHtml(c.title)}</span>
+          </div>
+          ${streakLabel ? `<span class="cc-streak ${c.type}">${streakLabel}</span>` : ''}
+        </div>
+        <div class="cc-bottom">
+          <span class="cc-freq">${freqLabel}</span>
+          <div class="cc-actions"></div>
+        </div>`;
+
+      const $actions = card.querySelector('.cc-actions');
+
+      if (!showActions) return card;
+
+      if (alreadyLogged) {
+        const chip = document.createElement('span');
+        chip.className = `cc-status-chip ${loggedStatus}`;
+        chip.textContent = loggedStatus === 'completed' ? '✓ Done' : loggedStatus === 'lapsed' ? '✗ Lapsed' : 'Skipped';
+        $actions.appendChild(chip);
+      } else {
+        const doneLabel   = isAbstain  ? '✓ Clean'   : '✓ Done';
+        const lapsedLabel = isAbstain  ? '✗ Slipped' : '✗ Lapsed';
+
+        const doneBtn   = makeLogBtn(doneLabel,   'done',   () => commitLog(c.id, 'completed', card, $actions));
+        const lapsedBtn = makeLogBtn(lapsedLabel, 'lapsed', () => commitLog(c.id, 'lapsed',    card, $actions));
+
+        $actions.appendChild(doneBtn);
+        if (!isOneTime) $actions.appendChild(lapsedBtn);
+      }
+
+      return card;
+    }
+
+    function makeLogBtn(label, cls, handler) {
+      const btn = document.createElement('button');
+      btn.className = `cc-btn ${cls}`;
+      btn.textContent = label;
+      btn.addEventListener('click', handler);
+      return btn;
+    }
+
+    async function commitLog(id, status, cardEl, actionsEl) {
+      // Disable all buttons immediately
+      actionsEl.querySelectorAll('button').forEach(b => b.disabled = true);
+
+      try {
+        const res = await fetch(`${API}/api/commitments/${id}/log`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ session_id: sessionId, status }),
+        });
+        if (!res.ok) throw new Error();
+
+        setTodayLog(id, status);
+        cardEl.classList.add('logged');
+
+        // Swap buttons for status chip
+        actionsEl.innerHTML = '';
+        const chip = document.createElement('span');
+        chip.className = `cc-status-chip ${status}`;
+        chip.textContent = status === 'completed' ? '✓ Done' : '✗ Lapsed';
+        actionsEl.appendChild(chip);
+
+        updateChaseBadge();
+      } catch (_) {
+        actionsEl.querySelectorAll('button').forEach(b => b.disabled = false);
+      }
+    }
+
+    // ── Chase badge ────────────────────────────────────────────────────────────
+    async function updateChaseBadge() {
+      try {
+        const res = await fetch(`${API}/api/chase/${sessionId}`);
+        if (!res.ok) return;
+        const { unlogged } = await res.json();
+        const count = unlogged.length;
+        $chaseBadge.textContent = count;
+        $chaseBadge.classList.toggle('hidden', count === 0);
+      } catch (_) {}
+    }
+
+    // ── Helpers ────────────────────────────────────────────────────────────────
+    function formatFreq(c) {
+      if (c.frequency === 'daily')         return 'Daily';
+      if (c.frequency === 'weekly')        return 'Weekly';
+      if (c.frequency === 'one-time')      return c.due_date ? `Due ${c.due_date}` : 'One-time';
+      if (c.frequency === 'specific_days') return (c.days_of_week || []).map(d => d[0].toUpperCase() + d.slice(1)).join(', ');
+      return '';
+    }
+
+    function escHtml(str) {
+      return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    }
 
     // ==========================================================================
     // API
