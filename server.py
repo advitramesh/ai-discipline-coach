@@ -584,9 +584,8 @@ async def coach(request: Request):
     except RuntimeError as e:
         raise HTTPException(status_code=503, detail=str(e))
 
-    # Auto-save any commitment the coach created
-    if intent == "task_request":
-        reply = extract_and_save_commitment(session_id, reply)
+    # Strip <commitment> tag and auto-save regardless of classified intent
+    reply = extract_and_save_commitment(session_id, reply)
 
     history.append({"role": "assistant", "content": reply})
 
