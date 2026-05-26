@@ -1,5 +1,7 @@
 from __future__ import annotations
 import os
+import re
+import json
 from datetime import date, datetime, timedelta, timezone
 from dotenv import load_dotenv
 from fastapi import FastAPI, Request, HTTPException
@@ -39,10 +41,14 @@ groq_client = Groq(api_key=groq_api_key) if groq_api_key else None
 OLLAMA_URL = "http://localhost:11434"
 MAX_HISTORY = 10
 
+DAY_ABBREVS = {0: 'mon', 1: 'tue', 2: 'wed', 3: 'thu', 4: 'fri', 5: 'sat', 6: 'sun'}
+
+COMMITMENT_TAG_RE = re.compile(r'<commitment>(.*?)</commitment>', re.DOTALL)
+
 # In-memory stores
 conversation_history: dict[str, list] = {}
-onboarding_state: dict[str, int] = {}  # 0=ask goal, 1=ask style, 2+=done
-onboarding_data: dict[str, dict] = {}  # temp storage during onboarding
+onboarding_state: dict[str, int] = {}
+onboarding_data: dict[str, dict] = {}
 
 COACHING_SYSTEM_PROMPT = """You are an elite personal discipline coach specializing in habit formation,
 motivation, and helping people recover from lapses and relapses. You combine
@@ -62,10 +68,22 @@ USER CONTEXT:
 - Last check-in: {last_checkin}
 - Recent lapse history: {lapse_summary}
 
+COMMITMENTS & TASKS:
+{commitments_context}
+
+COMMITMENT TRACKING RULES:
+- When the user asks to add a commitment or task, respond helpfully AND include a machine-readable tag at the very end of your reply in this exact format:
+  <commitment>{{"title": "...", "type": "do|abstain|one-time", "frequency": "daily|weekly|specific_days|one-time", "days_of_week": ["mon","tue"], "due_date": "YYYY-MM-DD or null"}}</commitment>
+- Only include the tag when creating a NEW commitment. Never include it for logging, motivation, or chat.
+- "do" = positive habit to build. "abstain" = thing to avoid. "one-time" = single task with optional due date.
+- For specific_days, use lowercase 3-letter abbreviations: mon, tue, wed, thu, fri, sat, sun.
+
 For MOTIVATION: Connect to deeper why. Use implementation intentions.
 For LAPSE: Acknowledge, get curious about trigger, find smallest re-entry point.
 For RELAPSE: Slow down, explore if goal needs adjusting, rebuild smaller.
 For CHECK-IN: Acknowledge they showed up, ask one powerful question, reflect patterns.
+For TASK_UPDATE: Acknowledge the update, note progress, ask about tomorrow.
+For TASK_REQUEST: Confirm the new commitment warmly, then include the <commitment> tag.
 
 TONE: tough love = direct and challenging. balanced = warm but honest.
 gentle = empathetic and patient.
@@ -77,7 +95,10 @@ RESPONSE RULES:
 - No corporate wellness speak."""
 
 INTENT_CLASSIFIER_PROMPT = """Classify the following user message into exactly one of these intents:
-checkin, motivation, lapse, relapse, general
+checkin, motivation, lapse, relapse, task_update, task_request, general
+
+- task_update: user is reporting progress, completion, or failure on a commitment or task
+- task_request: user is asking to add, set, or create a new commitment, habit, or task
 
 Return only the single word. Nothing else.
 
@@ -141,7 +162,7 @@ def _call_ollama(messages: list, system_prompt: str) -> str:
 # =============================================================================
 
 def classify_intent(message: str) -> str:
-    valid = {"checkin", "motivation", "lapse", "relapse", "general"}
+    valid = {"checkin", "motivation", "lapse", "relapse", "task_update", "task_request", "general"}
     try:
         reply, _ = call_llm(
             [{"role": "user", "content": INTENT_CLASSIFIER_PROMPT.format(message=message)}],
@@ -203,20 +224,19 @@ def log_chat(session_id: str, user_message: str, coach_reply: str, provider: str
 
 
 def load_history_from_db(session_id: str) -> list:
-    """Rebuild conversation history from chat_logs after a server restart."""
     try:
         result = (
             supabase.table("chat_logs")
             .select("user_message, coach_reply, created_at")
             .eq("session_id", session_id)
             .order("created_at", desc=True)
-            .limit(5)  # last 5 exchanges = 10 messages
+            .limit(5)
             .execute()
         )
         if not result.data:
             return []
         messages = []
-        for row in reversed(result.data):  # chronological order
+        for row in reversed(result.data):
             messages.append({"role": "user",      "content": row["user_message"]})
             messages.append({"role": "assistant",  "content": row["coach_reply"]})
         print(f"Loaded {len(messages)} messages from DB for session {session_id}")
@@ -269,6 +289,173 @@ def get_lapse_summary(session_id: str) -> str:
 
 
 # =============================================================================
+# COMMITMENT HELPERS
+# =============================================================================
+
+def is_due_today(commitment: dict) -> bool:
+    freq = commitment.get("frequency")
+    today = date.today()
+    if freq == "daily":
+        return True
+    if freq == "one-time":
+        due = commitment.get("due_date")
+        return due is not None and str(due) == str(today)
+    if freq == "weekly":
+        return today.weekday() == 0  # Monday by default
+    if freq == "specific_days":
+        days = commitment.get("days_of_week") or []
+        return DAY_ABBREVS[today.weekday()] in days
+    return False
+
+
+def get_todays_commitments(session_id: str) -> list:
+    try:
+        result = (
+            supabase.table("commitments")
+            .select("*")
+            .eq("session_id", session_id)
+            .eq("active", True)
+            .execute()
+        )
+        if not result.data:
+            return []
+        return [c for c in result.data if is_due_today(c)]
+    except Exception as e:
+        print(f"Error fetching commitments: {e}")
+        return []
+
+
+def calculate_commitment_streak(commitment_id: str) -> int:
+    try:
+        result = (
+            supabase.table("commitment_logs")
+            .select("date, status")
+            .eq("commitment_id", commitment_id)
+            .order("date", desc=True)
+            .execute()
+        )
+        if not result.data:
+            return 0
+        logged_days = {row["date"]: row["status"] for row in result.data}
+        streak = 0
+        check = date.today()
+        while True:
+            key = str(check)
+            if key not in logged_days:
+                # Allow today to be missing (not yet logged)
+                if check == date.today():
+                    check -= timedelta(days=1)
+                    continue
+                break
+            if logged_days[key] == "completed":
+                streak += 1
+                check -= timedelta(days=1)
+            else:
+                break
+        return streak
+    except Exception as e:
+        print(f"Error calculating commitment streak: {e}")
+        return 0
+
+
+def get_abstinence_streak(commitment_id: str) -> int:
+    """Days since last lapse for abstain-type commitments."""
+    try:
+        result = (
+            supabase.table("commitment_logs")
+            .select("date, status")
+            .eq("commitment_id", commitment_id)
+            .in_("status", ["lapsed", "skipped"])
+            .order("date", desc=True)
+            .limit(1)
+            .execute()
+        )
+        if not result.data:
+            # No lapses ever — streak from commitment creation
+            c_result = (
+                supabase.table("commitments")
+                .select("created_at")
+                .eq("id", commitment_id)
+                .execute()
+            )
+            if c_result.data:
+                created = date.fromisoformat(c_result.data[0]["created_at"][:10])
+                return (date.today() - created).days
+            return 0
+        last_lapse = date.fromisoformat(result.data[0]["date"])
+        return (date.today() - last_lapse).days
+    except Exception as e:
+        print(f"Error calculating abstinence streak: {e}")
+        return 0
+
+
+def build_commitments_context(session_id: str) -> str:
+    try:
+        result = (
+            supabase.table("commitments")
+            .select("*")
+            .eq("session_id", session_id)
+            .eq("active", True)
+            .execute()
+        )
+        if not result.data:
+            return "No active commitments yet."
+
+        today_commitments = [c for c in result.data if is_due_today(c)]
+        other_commitments = [c for c in result.data if not is_due_today(c)]
+
+        lines = []
+
+        if today_commitments:
+            lines.append("DUE TODAY:")
+            for c in today_commitments:
+                if c["type"] == "abstain":
+                    streak = get_abstinence_streak(c["id"])
+                    lines.append(f"  - [{c['type'].upper()}] {c['title']} — {streak}d clean")
+                else:
+                    streak = calculate_commitment_streak(c["id"])
+                    lines.append(f"  - [{c['type'].upper()}] {c['title']} — {streak}d streak")
+
+        if other_commitments:
+            lines.append("OTHER ACTIVE COMMITMENTS:")
+            for c in other_commitments:
+                freq = c.get("frequency", "")
+                lines.append(f"  - [{c['type'].upper()}] {c['title']} ({freq})")
+
+        return "\n".join(lines) if lines else "No active commitments yet."
+    except Exception as e:
+        print(f"Error building commitments context: {e}")
+        return "Could not load commitments."
+
+
+def extract_and_save_commitment(session_id: str, reply: str) -> str:
+    """Parse <commitment> tag from reply, save to DB, return cleaned reply."""
+    match = COMMITMENT_TAG_RE.search(reply)
+    if not match:
+        return reply
+
+    raw = match.group(1).strip()
+    clean_reply = COMMITMENT_TAG_RE.sub("", reply).strip()
+
+    try:
+        data = json.loads(raw)
+        supabase.table("commitments").insert({
+            "session_id": session_id,
+            "title": data.get("title", "Untitled"),
+            "type": data.get("type", "do"),
+            "frequency": data.get("frequency"),
+            "days_of_week": data.get("days_of_week"),
+            "due_date": data.get("due_date") if data.get("due_date") not in (None, "null", "") else None,
+            "active": True,
+        }).execute()
+        print(f"Auto-saved commitment for {session_id}: {data.get('title')}")
+    except Exception as e:
+        print(f"Error saving auto-commitment: {e}")
+
+    return clean_reply
+
+
+# =============================================================================
 # ONBOARDING
 # =============================================================================
 
@@ -289,10 +476,6 @@ def parse_coaching_style(message: str) -> str:
 
 
 def handle_onboarding(session_id: str, user_message: str) -> dict | None:
-    """
-    Returns a response dict if still in onboarding, None if onboarding just completed
-    and the request should fall through to the full coaching flow.
-    """
     step = onboarding_state.get(session_id, 0)
 
     if step == 0:
@@ -360,20 +543,16 @@ async def coach(request: Request):
 
     profile = get_user_profile(session_id)
 
-    # Onboarding: run if no profile exists yet
     if not profile:
         onboarding_response = handle_onboarding(session_id, user_message)
         if onboarding_response is not None:
             return onboarding_response
-        # Step 2 just completed — fetch the newly created profile
         profile = get_user_profile(session_id)
         if not profile:
             raise HTTPException(status_code=500, detail="Failed to create user profile")
 
-    # Classify intent before generating the response
     intent = classify_intent(user_message)
 
-    # Restore history from DB if server restarted and in-memory cache is empty
     if session_id not in conversation_history:
         conversation_history[session_id] = load_history_from_db(session_id)
 
@@ -383,9 +562,10 @@ async def coach(request: Request):
         conversation_history[session_id] = history[-MAX_HISTORY:]
         history = conversation_history[session_id]
 
-    # Build dynamic system prompt
     streak = calculate_streak(session_id)
     lapse_summary = get_lapse_summary(session_id)
+    commitments_context = build_commitments_context(session_id)
+
     last_checkin = profile.get("last_checkin") or "Never"
     if last_checkin != "Never":
         last_checkin = last_checkin[:10]
@@ -396,12 +576,17 @@ async def coach(request: Request):
         streak_days=streak,
         last_checkin=last_checkin,
         lapse_summary=lapse_summary,
+        commitments_context=commitments_context,
     )
 
     try:
         reply, provider = call_llm(history, system_prompt)
     except RuntimeError as e:
         raise HTTPException(status_code=503, detail=str(e))
+
+    # Auto-save any commitment the coach created
+    if intent == "task_request":
+        reply = extract_and_save_commitment(session_id, reply)
 
     history.append({"role": "assistant", "content": reply})
 
@@ -414,3 +599,178 @@ async def coach(request: Request):
         "intent": intent,
         "streak_days": streak,
     }
+
+
+@app.post("/api/commitments")
+async def create_commitment(request: Request):
+    data = await request.json()
+    session_id = data.get("session_id")
+    if not session_id:
+        raise HTTPException(status_code=400, detail="session_id is required")
+
+    try:
+        result = supabase.table("commitments").insert({
+            "session_id": session_id,
+            "title": data.get("title", "Untitled"),
+            "type": data.get("type", "do"),
+            "frequency": data.get("frequency"),
+            "days_of_week": data.get("days_of_week"),
+            "due_date": data.get("due_date"),
+            "active": True,
+        }).execute()
+        return {"commitment": result.data[0] if result.data else {}}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/api/commitments/{session_id}")
+async def list_commitments(session_id: str):
+    try:
+        result = (
+            supabase.table("commitments")
+            .select("*")
+            .eq("session_id", session_id)
+            .eq("active", True)
+            .order("created_at", desc=False)
+            .execute()
+        )
+        commitments = result.data or []
+
+        enriched = []
+        for c in commitments:
+            due_today = is_due_today(c)
+            if c["type"] == "abstain":
+                streak = get_abstinence_streak(c["id"])
+            else:
+                streak = calculate_commitment_streak(c["id"])
+            enriched.append({**c, "due_today": due_today, "streak": streak})
+
+        return {"commitments": enriched}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/api/commitments/{commitment_id}/log")
+async def log_commitment(commitment_id: str, request: Request):
+    data = await request.json()
+    session_id = data.get("session_id")
+    status = data.get("status")  # completed | skipped | lapsed
+    note = data.get("note", "")
+    log_date = data.get("date", str(date.today()))
+
+    if not session_id:
+        raise HTTPException(status_code=400, detail="session_id is required")
+    if status not in ("completed", "skipped", "lapsed"):
+        raise HTTPException(status_code=400, detail="status must be completed, skipped, or lapsed")
+
+    try:
+        # Upsert: one log per commitment per day
+        existing = (
+            supabase.table("commitment_logs")
+            .select("id")
+            .eq("commitment_id", commitment_id)
+            .eq("date", log_date)
+            .execute()
+        )
+        if existing.data:
+            result = (
+                supabase.table("commitment_logs")
+                .update({"status": status, "note": note})
+                .eq("id", existing.data[0]["id"])
+                .execute()
+            )
+        else:
+            result = supabase.table("commitment_logs").insert({
+                "commitment_id": commitment_id,
+                "session_id": session_id,
+                "date": log_date,
+                "status": status,
+                "note": note,
+            }).execute()
+        return {"log": result.data[0] if result.data else {}}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.delete("/api/commitments/{commitment_id}")
+async def delete_commitment(commitment_id: str, request: Request):
+    data = await request.json()
+    session_id = data.get("session_id")
+    if not session_id:
+        raise HTTPException(status_code=400, detail="session_id is required")
+
+    try:
+        supabase.table("commitments").update({"active": False}).eq("id", commitment_id).eq("session_id", session_id).execute()
+        return {"deleted": True}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/api/dashboard/{session_id}")
+async def dashboard(session_id: str):
+    try:
+        profile = get_user_profile(session_id)
+        streak = calculate_streak(session_id)
+        lapse_summary = get_lapse_summary(session_id)
+
+        commitments_result = (
+            supabase.table("commitments")
+            .select("*")
+            .eq("session_id", session_id)
+            .eq("active", True)
+            .execute()
+        )
+        commitments = commitments_result.data or []
+
+        today_due = []
+        for c in commitments:
+            if is_due_today(c):
+                if c["type"] == "abstain":
+                    s = get_abstinence_streak(c["id"])
+                else:
+                    s = calculate_commitment_streak(c["id"])
+                today_due.append({**c, "streak": s})
+
+        return {
+            "profile": profile,
+            "streak_days": streak,
+            "lapse_summary": lapse_summary,
+            "todays_commitments": today_due,
+            "total_active": len(commitments),
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/api/chase/{session_id}")
+async def chase(session_id: str):
+    """Return commitments due today that have no log entry yet."""
+    try:
+        today = str(date.today())
+        commitments_result = (
+            supabase.table("commitments")
+            .select("*")
+            .eq("session_id", session_id)
+            .eq("active", True)
+            .execute()
+        )
+        all_active = commitments_result.data or []
+        due_today = [c for c in all_active if is_due_today(c)]
+
+        if not due_today:
+            return {"unlogged": []}
+
+        ids = [c["id"] for c in due_today]
+        logs_result = (
+            supabase.table("commitment_logs")
+            .select("commitment_id")
+            .in_("commitment_id", ids)
+            .eq("date", today)
+            .execute()
+        )
+        logged_ids = {row["commitment_id"] for row in (logs_result.data or [])}
+        unlogged = [c for c in due_today if c["id"] not in logged_ids]
+
+        return {"unlogged": unlogged, "date": today}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))

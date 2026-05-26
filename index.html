@@ -3,112 +3,712 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-  <title>Coach</title>
+  <title>Discipline</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="style.css">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    /* ── RESET ─────────────────────────────────────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    /* ── TOKENS ─────────────────────────────────────────────────────────────── */
+    :root {
+      --bg:        #0F0F0F;
+      --card:      #1A1A1A;
+      --purple:    #6C63FF;
+      --success:   #00C48C;
+      --danger:    #FF6B6B;
+      --text:      #FFFFFF;
+      --secondary: #A0A0A0;
+      --border:    #2A2A2A;
+      --r-card:    16px;
+      --r-bubble:  18px;
+    }
+
+    html, body { height: 100%; background: var(--bg); color: var(--text); font-family: 'Inter', sans-serif; }
+    body { display: flex; justify-content: center; }
+    .hidden { display: none !important; }
+
+    /* ── ONBOARDING OVERLAY ─────────────────────────────────────────────────── */
+    #onboarding {
+      position: fixed; inset: 0; z-index: 100;
+      background: var(--bg);
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      padding: 2rem 1.5rem;
+    }
+
+    .ob-step {
+      display: none; flex-direction: column; align-items: center;
+      width: 100%; max-width: 400px; text-align: center;
+      animation: fadeUp 0.25s ease;
+    }
+    .ob-step.active { display: flex; }
+
+    .ob-heading { font-size: 2rem; font-weight: 800; letter-spacing: -0.02em; margin-bottom: 0.5rem; }
+    .ob-sub     { color: var(--secondary); font-size: 0.9rem; margin-bottom: 2rem; }
+
+    .ob-input {
+      width: 100%; background: var(--card); border: 1.5px solid var(--border);
+      border-radius: var(--r-card); color: var(--text); font-family: 'Inter', sans-serif;
+      font-size: 1rem; padding: 1rem 1.25rem; resize: none;
+      transition: border-color 200ms; margin-bottom: 1rem;
+    }
+    .ob-input:focus { outline: none; border-color: var(--purple); }
+    .ob-input::placeholder { color: var(--secondary); }
+
+    .btn {
+      background: var(--purple); border: none; border-radius: var(--r-card);
+      color: #fff; cursor: pointer; font-family: 'Inter', sans-serif;
+      font-size: 1rem; font-weight: 600; padding: 0.9rem 1.5rem; width: 100%;
+      transition: opacity 200ms, transform 100ms;
+    }
+    .btn:hover  { opacity: 0.88; }
+    .btn:active { transform: scale(0.98); }
+    .btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+    /* Style cards */
+    .style-cards { display: flex; flex-direction: column; gap: 0.75rem; width: 100%; margin-bottom: 1.25rem; }
+
+    .style-card {
+      background: var(--card); border: 1.5px solid var(--border);
+      border-radius: var(--r-card); cursor: pointer; padding: 1.1rem 1.25rem;
+      text-align: left; width: 100%; color: var(--text);
+      font-family: 'Inter', sans-serif;
+      transition: border-color 200ms, background 200ms, transform 100ms;
+    }
+    .style-card:hover   { border-color: var(--purple); }
+    .style-card:active  { transform: scale(0.98); }
+    .style-card.selected { border-color: var(--purple); background: rgba(108,99,255,0.12); }
+
+    .style-card-title { font-size: 0.75rem; font-weight: 700; letter-spacing: 0.1em; color: var(--purple); margin-bottom: 0.3rem; }
+    .style-card-desc  { font-size: 0.88rem; color: var(--secondary); }
+
+    /* Step 3 */
+    .checkmark-circle {
+      width: 80px; height: 80px; border-radius: 50%; background: var(--success);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 2.5rem; margin-bottom: 1.5rem;
+      animation: popIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+    }
+    .goal-echo { color: var(--purple); font-weight: 600; font-size: 0.95rem; margin-top: 0.5rem; }
+
+    /* ── MAIN APP ───────────────────────────────────────────────────────────── */
+    #app {
+      width: 100%; max-width: 480px;
+      height: 100vh; height: 100dvh;
+      display: flex; flex-direction: column;
+    }
+
+    /* ── HEADER ─────────────────────────────────────────────────────────────── */
+    #header {
+      display: flex; align-items: center; justify-content: space-between;
+      flex-shrink: 0; padding: 1rem 1.25rem;
+      border-bottom: 1px solid var(--border); background: var(--bg);
+    }
+
+    .app-name { font-size: 0.95rem; font-weight: 800; letter-spacing: 0.18em; color: var(--purple); }
+
+    #streak-btn {
+      background: rgba(0,196,140,0.1); border: 1px solid rgba(0,196,140,0.25);
+      border-radius: 20px; color: var(--success); cursor: pointer;
+      font-family: 'Inter', sans-serif; font-size: 0.85rem; font-weight: 600;
+      padding: 0.35rem 0.85rem; transition: background 200ms;
+    }
+    #streak-btn:hover { background: rgba(0,196,140,0.2); }
+
+    /* ── STATS DRAWER ───────────────────────────────────────────────────────── */
+    #stats-drawer {
+      position: fixed; top: 0; left: 50%;
+      transform: translateX(-50%) translateY(-110%);
+      width: 100%; max-width: 480px;
+      background: var(--card); border-bottom: 1px solid var(--border);
+      border-radius: 0 0 var(--r-card) var(--r-card);
+      padding: 2.25rem 1.5rem 1.5rem;
+      z-index: 50; transition: transform 200ms ease;
+      box-shadow: 0 12px 40px rgba(0,0,0,0.6);
+    }
+    #stats-drawer.open { transform: translateX(-50%) translateY(0); }
+
+    .drawer-close {
+      position: absolute; top: 0.85rem; right: 1rem;
+      background: var(--border); border: none; border-radius: 50%;
+      color: var(--secondary); cursor: pointer; font-size: 0.8rem;
+      height: 28px; width: 28px; transition: background 200ms;
+    }
+    .drawer-close:hover { background: #3a3a3a; }
+
+    .drawer-streak-num   { font-size: 3.5rem; font-weight: 800; color: var(--success); text-align: center; line-height: 1; }
+    .drawer-streak-label { text-align: center; color: var(--secondary); font-size: 0.78rem; margin-bottom: 1.1rem; }
+
+    .drawer-motivation {
+      background: var(--bg); border-left: 3px solid var(--purple);
+      border-radius: 8px; color: var(--secondary); font-size: 0.83rem;
+      font-style: italic; padding: 0.7rem 1rem; margin-bottom: 1.1rem;
+    }
+
+    .drawer-rows { display: flex; flex-direction: column; gap: 0.55rem; }
+
+    .drawer-row {
+      display: flex; align-items: center; justify-content: space-between;
+      background: var(--bg); border-radius: 10px; padding: 0.65rem 1rem;
+    }
+    .drawer-label { color: var(--secondary); font-size: 0.72rem; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; }
+    .drawer-value { font-size: 0.88rem; font-weight: 500; max-width: 60%; text-align: right; }
+
+    .style-badge { border-radius: 20px; font-size: 0.72rem; font-weight: 600; padding: 0.2rem 0.65rem; }
+    .style-badge.tough-love { background: rgba(255,107,107,0.15); color: var(--danger); }
+    .style-badge.balanced   { background: rgba(108,99,255,0.15);  color: var(--purple); }
+    .style-badge.gentle     { background: rgba(0,196,140,0.15);   color: var(--success); }
+
+    /* ── CHAT WRAPPER ───────────────────────────────────────────────────────── */
+    #chat-wrapper { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+
+    /* ── MOOD SELECTOR ──────────────────────────────────────────────────────── */
+    #mood-selector {
+      flex-shrink: 0; background: var(--card);
+      border-bottom: 1px solid var(--border);
+      padding: 0.9rem 1.1rem; display: none;
+    }
+    #mood-selector.show { display: block; }
+
+    .mood-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.75rem; }
+    .mood-heading { font-size: 0.82rem; font-weight: 600; }
+
+    .mood-dismiss {
+      background: none; border: none; color: var(--secondary);
+      cursor: pointer; font-size: 0.95rem; padding: 0.2rem;
+    }
+
+    .mood-emojis { display: flex; gap: 0.45rem; }
+
+    .mood-btn {
+      background: var(--bg); border: 1.5px solid var(--border); border-radius: 12px;
+      cursor: pointer; display: flex; flex-direction: column; align-items: center;
+      flex: 1; padding: 0.55rem 0.2rem; transition: border-color 200ms, background 200ms;
+    }
+    .mood-btn:hover   { border-color: var(--purple); }
+    .mood-btn.selected { border-color: var(--purple); background: rgba(108,99,255,0.12); }
+
+    .mood-emoji { font-size: 1.4rem; line-height: 1; margin-bottom: 0.2rem; }
+    .mood-label { color: var(--secondary); font-size: 0.58rem; font-weight: 500; text-align: center; }
+
+    /* ── CHECK-IN CARD ──────────────────────────────────────────────────────── */
+    #checkin-card {
+      flex-shrink: 0; margin: 0.9rem 1rem 0;
+      background: var(--card); border: 1px solid var(--border);
+      border-radius: var(--r-card); padding: 1.25rem; display: none; text-align: center;
+    }
+    #checkin-card.show { display: block; }
+
+    .checkin-flame { font-size: 1.75rem; margin-bottom: 0.4rem; }
+    .checkin-title { font-size: 0.95rem; font-weight: 700; margin-bottom: 0.25rem; }
+    .checkin-sub   { color: var(--secondary); font-size: 0.8rem; margin-bottom: 0.9rem; }
+
+    .btn-sm {
+      background: var(--purple); border: none; border-radius: 12px;
+      color: #fff; cursor: pointer; font-family: 'Inter', sans-serif;
+      font-size: 0.88rem; font-weight: 600; padding: 0.65rem 1.25rem;
+      width: 100%; transition: opacity 200ms;
+    }
+    .btn-sm:hover { opacity: 0.88; }
+
+    /* ── MESSAGES ───────────────────────────────────────────────────────────── */
+    #messages {
+      flex: 1; overflow-y: auto; padding: 1rem;
+      display: flex; flex-direction: column; gap: 0.75rem;
+      scroll-behavior: smooth;
+    }
+
+    .msg { display: flex; flex-direction: column; max-width: 80%; animation: fadeUp 0.2s ease; }
+    .msg.user  { align-self: flex-end;  align-items: flex-end; }
+    .msg.coach { align-self: flex-start; align-items: flex-start; }
+
+    .bubble {
+      border-radius: var(--r-bubble);
+      font-size: 0.92rem; line-height: 1.55;
+      padding: 0.75rem 1rem;
+      white-space: pre-wrap; word-break: break-word;
+    }
+    .msg.user  .bubble { background: var(--purple); color: #fff; border-bottom-right-radius: 4px; }
+    .msg.coach .bubble { background: var(--card); border: 1px solid var(--border); color: var(--text); border-bottom-left-radius: 4px; }
+    .msg.coach .bubble.error { border-color: var(--danger); color: var(--danger); }
+
+    .msg-pills { display: flex; flex-wrap: wrap; gap: 0.35rem; margin-top: 0.3rem; }
+
+    .pill { border-radius: 6px; font-size: 0.63rem; font-weight: 600; letter-spacing: 0.04em; padding: 0.18rem 0.5rem; text-transform: uppercase; }
+    .pill-provider { background: rgba(255,255,255,0.07); color: var(--secondary); }
+    .pill-intent            { background: rgba(255,255,255,0.07); color: var(--secondary); }
+    .pill-intent.checkin    { background: rgba(99,149,255,0.15);  color: #6395FF; }
+    .pill-intent.motivation { background: rgba(0,196,140,0.15);   color: var(--success); }
+    .pill-intent.lapse      { background: rgba(255,165,0,0.15);   color: #FFA500; }
+    .pill-intent.relapse    { background: rgba(255,107,107,0.15); color: var(--danger); }
+
+    /* Loading dots */
+    .dots-bubble {
+      align-self: flex-start;
+      background: var(--card); border: 1px solid var(--border);
+      border-radius: var(--r-bubble); border-bottom-left-radius: 4px;
+      display: flex; gap: 5px; padding: 0.75rem 1rem;
+      animation: fadeUp 0.2s ease;
+    }
+    .dot {
+      width: 7px; height: 7px; border-radius: 50%; background: var(--secondary);
+      animation: dotPulse 1.2s infinite;
+    }
+    .dot:nth-child(2) { animation-delay: 0.2s; }
+    .dot:nth-child(3) { animation-delay: 0.4s; }
+
+    /* ── BOTTOM BAR ─────────────────────────────────────────────────────────── */
+    #bottom-bar {
+      flex-shrink: 0; display: flex; align-items: flex-end; gap: 0.6rem;
+      background: var(--bg); border-top: 1px solid var(--border);
+      padding: 0.75rem 1rem;
+      padding-bottom: max(0.75rem, env(safe-area-inset-bottom));
+    }
+
+    #msg-input {
+      flex: 1; background: var(--card); border: 1.5px solid var(--border);
+      border-radius: 20px; color: var(--text); font-family: 'Inter', sans-serif;
+      font-size: 0.95rem; line-height: 1.5; max-height: 120px;
+      overflow-y: auto; padding: 0.6rem 1rem; resize: none;
+      transition: border-color 200ms;
+    }
+    #msg-input:focus    { outline: none; border-color: var(--purple); }
+    #msg-input::placeholder { color: var(--secondary); }
+
+    #send-btn {
+      align-items: center; background: var(--purple); border: none; border-radius: 50%;
+      color: #fff; cursor: pointer; display: flex; flex-shrink: 0;
+      font-size: 1.1rem; font-weight: 700;
+      height: 40px; width: 40px; justify-content: center;
+      transition: opacity 200ms, transform 100ms;
+    }
+    #send-btn:hover   { opacity: 0.85; }
+    #send-btn:active  { transform: scale(0.92); }
+    #send-btn:disabled { opacity: 0.35; cursor: not-allowed; }
+
+    /* ── ANIMATIONS ─────────────────────────────────────────────────────────── */
+    @keyframes fadeUp  { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+    @keyframes popIn   { 0% { transform: scale(0) rotate(-15deg); opacity: 0; } 100% { transform: scale(1) rotate(0); opacity: 1; } }
+    @keyframes dotPulse {
+      0%, 80%, 100% { opacity: 0.3; transform: scale(0.8); }
+      40%           { opacity: 1;   transform: scale(1); }
+    }
+  </style>
 </head>
 <body>
 
-  <!-- SCREEN: Onboarding -->
-  <div id="screen-onboarding" class="screen">
-
-    <div id="step-1" class="step active">
-      <div class="brand">
-        <div class="brand-logo">⚡</div>
-        <h1 class="brand-name">Coach</h1>
-        <p class="brand-tagline">Your discipline coach</p>
+  <!-- ── STATS DRAWER ─────────────────────────────────────────────────────── -->
+  <div id="stats-drawer">
+    <button class="drawer-close" id="drawer-close">✕</button>
+    <div class="drawer-streak-num" id="drawer-streak">0</div>
+    <div class="drawer-streak-label">🔥 day streak</div>
+    <div class="drawer-motivation" id="drawer-motivation"></div>
+    <div class="drawer-rows">
+      <div class="drawer-row">
+        <span class="drawer-label">Goal</span>
+        <span class="drawer-value" id="drawer-goal">—</span>
       </div>
-      <div class="form-group">
-        <label for="goal-input">What is your main goal?</label>
-        <textarea id="goal-input" placeholder="Be specific. e.g. Run 5km every day without skipping." rows="3"></textarea>
-        <button id="goal-btn" class="btn">Continue →</button>
+      <div class="drawer-row">
+        <span class="drawer-label">Style</span>
+        <span class="drawer-value"><span id="drawer-style" class="style-badge">—</span></span>
       </div>
     </div>
+  </div>
 
-    <div id="step-2" class="step">
-      <h2>How do you want to be coached?</h2>
+  <!-- ── ONBOARDING ───────────────────────────────────────────────────────── -->
+  <div id="onboarding">
+    <!-- Step 1: Goal -->
+    <div id="ob-1" class="ob-step active">
+      <h1 class="ob-heading">What's your goal?</h1>
+      <p class="ob-sub">Be specific. Vague goals get vague results.</p>
+      <textarea id="ob-goal" class="ob-input" rows="3"
+        placeholder="e.g. Run 5km every day without skipping"></textarea>
+      <button id="ob-continue" class="btn">Continue</button>
+    </div>
+
+    <!-- Step 2: Style -->
+    <div id="ob-2" class="ob-step">
+      <h1 class="ob-heading">How should I coach you?</h1>
+      <p class="ob-sub">Choose your coaching style.</p>
       <div class="style-cards">
         <button class="style-card" data-style="tough love">
-          <span class="style-icon">💪</span>
-          <div class="style-text">
-            <strong>Tough Love</strong>
-            <p>Direct, no fluff, challenging</p>
-          </div>
+          <div class="style-card-title">TOUGH LOVE</div>
+          <div class="style-card-desc">Direct. No excuses. I'll push you hard.</div>
         </button>
         <button class="style-card" data-style="balanced">
-          <span class="style-icon">⚖️</span>
-          <div class="style-text">
-            <strong>Balanced</strong>
-            <p>Warm but honest, encouraging</p>
-          </div>
+          <div class="style-card-title">BALANCED</div>
+          <div class="style-card-desc">Honest but warm. Realistic and encouraging.</div>
         </button>
         <button class="style-card" data-style="gentle">
-          <span class="style-icon">🌱</span>
-          <div class="style-text">
-            <strong>Gentle</strong>
-            <p>Empathetic, patient, self-compassion</p>
-          </div>
+          <div class="style-card-title">GENTLE</div>
+          <div class="style-card-desc">Patient and compassionate. Self-compassion first.</div>
         </button>
       </div>
+      <button id="ob-letsgo" class="btn hidden">Let's Go</button>
     </div>
 
-    <div id="step-3" class="step">
-      <div class="confirm-icon">✅</div>
-      <h2>You're all set.</h2>
-      <p class="confirm-sub">Let's build some discipline.</p>
-      <button id="start-btn" class="btn">Start Coaching</button>
+    <!-- Step 3: Confirmation -->
+    <div id="ob-3" class="ob-step">
+      <div class="checkmark-circle">✓</div>
+      <h1 class="ob-heading">You're all set.</h1>
+      <p class="goal-echo" id="ob-echo"></p>
     </div>
-
   </div>
 
-  <!-- SCREEN: Chat -->
-  <div id="screen-chat" class="screen hidden">
-    <header class="topbar">
-      <div class="topbar-left">
-        <span class="topbar-logo">⚡</span>
-        <span class="topbar-title">Coach</span>
-      </div>
-      <button id="stats-btn" class="icon-btn" title="Your progress">🏆</button>
+  <!-- ── MAIN APP ──────────────────────────────────────────────────────────── -->
+  <div id="app" class="hidden">
+    <header id="header">
+      <span class="app-name">DISCIPLINE</span>
+      <button id="streak-btn">🔥 <span id="streak-count">0</span></button>
     </header>
-    <div id="messages" class="messages"></div>
-    <div class="input-bar">
+
+    <div id="chat-wrapper">
+
+      <!-- Mood Selector -->
+      <div id="mood-selector">
+        <div class="mood-header">
+          <span class="mood-heading">How are you showing up today?</span>
+          <button class="mood-dismiss" id="mood-dismiss">✕</button>
+        </div>
+        <div class="mood-emojis">
+          <button class="mood-btn" data-mood="Struggling" data-emoji="😫">
+            <span class="mood-emoji">😫</span><span class="mood-label">Struggling</span>
+          </button>
+          <button class="mood-btn" data-mood="Low" data-emoji="😕">
+            <span class="mood-emoji">😕</span><span class="mood-label">Low</span>
+          </button>
+          <button class="mood-btn" data-mood="Neutral" data-emoji="😐">
+            <span class="mood-emoji">😐</span><span class="mood-label">Neutral</span>
+          </button>
+          <button class="mood-btn" data-mood="Good" data-emoji="🙂">
+            <span class="mood-emoji">🙂</span><span class="mood-label">Good</span>
+          </button>
+          <button class="mood-btn" data-mood="Strong" data-emoji="💪">
+            <span class="mood-emoji">💪</span><span class="mood-label">Strong</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Check-in Card -->
+      <div id="checkin-card">
+        <div class="checkin-flame">🔥</div>
+        <div class="checkin-title">Check in for today</div>
+        <div class="checkin-sub">How's your discipline holding up?</div>
+        <button class="btn-sm" id="checkin-btn">Start Check-in</button>
+      </div>
+
+      <!-- Messages -->
+      <div id="messages"></div>
+    </div>
+
+    <div id="bottom-bar">
       <textarea id="msg-input" placeholder="Message your coach…" rows="1"></textarea>
-      <button id="send-btn" class="send-btn" aria-label="Send">↑</button>
+      <button id="send-btn">→</button>
     </div>
   </div>
 
-  <!-- SCREEN: Stats -->
-  <div id="screen-stats" class="screen hidden">
-    <header class="topbar">
-      <button id="back-btn" class="icon-btn">←</button>
-      <span class="topbar-title">Your Progress</span>
-      <span style="width:36px"></span>
-    </header>
-    <div class="stats-body">
-      <div class="streak-hero">
-        <div class="streak-flame">🔥</div>
-        <div id="streak-num" class="streak-num">0</div>
-        <div class="streak-label">day streak</div>
-      </div>
-      <div id="motivation-line" class="motivation-line"></div>
-      <div class="stat-cards">
-        <div class="stat-card">
-          <div class="stat-label">Your Goal</div>
-          <div id="s-goal" class="stat-val">—</div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-label">Coaching Style</div>
-          <div id="s-style" class="stat-val">—</div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-label">Total Check-ins</div>
-          <div id="s-checkins" class="stat-val">0</div>
-        </div>
-      </div>
-    </div>
-  </div>
+  <script>
+    const API = 'http://localhost:8000';
+    const today = () => new Date().toISOString().slice(0, 10);
 
-  <script src="app.js"></script>
+    // ── Persisted state ────────────────────────────────────────────────────────
+    let sessionId  = localStorage.getItem('session_id');
+    let profile    = JSON.parse(localStorage.getItem('coach_profile') || 'null');
+    let streakDays = parseInt(localStorage.getItem('streak_days') || '0', 10);
+    let moodPrefix = '';
+
+    if (!sessionId) {
+      sessionId = crypto.randomUUID();
+      localStorage.setItem('session_id', sessionId);
+    }
+
+    // ── DOM ────────────────────────────────────────────────────────────────────
+    const $ob        = document.getElementById('onboarding');
+    const $app       = document.getElementById('app');
+    const $messages  = document.getElementById('messages');
+    const $msgInput  = document.getElementById('msg-input');
+    const $sendBtn   = document.getElementById('send-btn');
+    const $streakBtn = document.getElementById('streak-btn');
+    const $streakCnt = document.getElementById('streak-count');
+    const $drawer    = document.getElementById('stats-drawer');
+    const $moodSel   = document.getElementById('mood-selector');
+    const $checkin   = document.getElementById('checkin-card');
+
+    // ── Boot ───────────────────────────────────────────────────────────────────
+    if (profile?.onboarding_complete) {
+      $ob.classList.add('hidden');
+      $app.classList.remove('hidden');
+      initApp();
+    } else {
+      initOnboarding();
+    }
+
+    // ==========================================================================
+    // ONBOARDING
+    // ==========================================================================
+    function initOnboarding() {
+      let pendingGoal = '', pendingStyle = '';
+
+      function showStep(n) {
+        document.querySelectorAll('.ob-step').forEach(s => s.classList.remove('active'));
+        document.getElementById(`ob-${n}`).classList.add('active');
+      }
+
+      // Step 1 — goal
+      const $goal = document.getElementById('ob-goal');
+      document.getElementById('ob-continue').addEventListener('click', () => {
+        const val = $goal.value.trim();
+        if (!val) return;
+        pendingGoal = val;
+        showStep(2);
+      });
+      $goal.addEventListener('keydown', e => {
+        if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); document.getElementById('ob-continue').click(); }
+      });
+
+      // Step 2 — style
+      const $letsgo = document.getElementById('ob-letsgo');
+      document.querySelectorAll('.style-card').forEach(card => {
+        card.addEventListener('click', () => {
+          document.querySelectorAll('.style-card').forEach(c => c.classList.remove('selected'));
+          card.classList.add('selected');
+          pendingStyle = card.dataset.style;
+          $letsgo.classList.remove('hidden');
+        });
+      });
+
+      $letsgo.addEventListener('click', async () => {
+        $letsgo.disabled = true;
+        $letsgo.textContent = 'Setting up…';
+
+        // Show step 3
+        document.getElementById('ob-echo').textContent = `"${pendingGoal}"`;
+        showStep(3);
+
+        // Save profile
+        profile = { goal: pendingGoal, coaching_style: pendingStyle, onboarding_complete: true };
+        localStorage.setItem('coach_profile', JSON.stringify(profile));
+
+        // Wire up backend + hold for 2s visual minimum
+        await Promise.all([
+          (async () => {
+            try {
+              await apiSend('Hello');
+              await apiSend(pendingGoal);
+              await apiSend(pendingStyle);
+            } catch (_) {}
+          })(),
+          new Promise(r => setTimeout(r, 2000)),
+        ]);
+
+        $ob.classList.add('hidden');
+        $app.classList.remove('hidden');
+        sessionStorage.setItem('first_chat', '1');
+        initApp();
+      });
+    }
+
+    // ==========================================================================
+    // APP
+    // ==========================================================================
+    function initApp() {
+      updateHeader();
+      checkDailyCards();
+      setupDrawer();
+      setupMood();
+      setupCheckin();
+      setupInput();
+
+      if (sessionStorage.getItem('first_chat') === '1') {
+        sessionStorage.removeItem('first_chat');
+        sendToChat("Hi, I'm ready to start");
+      } else {
+        $msgInput.focus();
+      }
+    }
+
+    // ── Header ─────────────────────────────────────────────────────────────────
+    function updateHeader() {
+      $streakCnt.textContent = streakDays;
+    }
+
+    // ── Stats drawer ───────────────────────────────────────────────────────────
+    function setupDrawer() {
+      $streakBtn.addEventListener('click', openDrawer);
+      document.getElementById('drawer-close').addEventListener('click', closeDrawer);
+      document.addEventListener('click', e => {
+        if ($drawer.classList.contains('open') && !$drawer.contains(e.target) && e.target !== $streakBtn)
+          closeDrawer();
+      });
+    }
+
+    function openDrawer() {
+      const lines = [
+        { max: 2,        text: 'Every expert was once a beginner.' },
+        { max: 6,        text: "You're building something real." },
+        { max: 13,       text: 'One week strong. Keep going.' },
+        { max: Infinity, text: "You're in the top 1%. Don't stop now." },
+      ];
+      const line = lines.find(l => streakDays <= l.max);
+
+      document.getElementById('drawer-streak').textContent    = streakDays;
+      document.getElementById('drawer-motivation').textContent = `"${line.text}"`;
+      document.getElementById('drawer-goal').textContent       = profile?.goal || '—';
+
+      const $badge   = document.getElementById('drawer-style');
+      const styleKey = (profile?.coaching_style || 'balanced').replace(' ', '-');
+      $badge.textContent = profile?.coaching_style || '—';
+      $badge.className   = `style-badge ${styleKey}`;
+
+      $drawer.classList.add('open');
+    }
+
+    function closeDrawer() { $drawer.classList.remove('open'); }
+
+    // ── Daily cards ────────────────────────────────────────────────────────────
+    function checkDailyCards() {
+      const t = today();
+      if (localStorage.getItem('last_mood_date')    !== t) $moodSel.classList.add('show');
+      if (localStorage.getItem('last_message_date') !== t) $checkin.classList.add('show');
+    }
+
+    // ── Mood selector ──────────────────────────────────────────────────────────
+    function setupMood() {
+      document.getElementById('mood-dismiss').addEventListener('click', dismissMood);
+      document.querySelectorAll('.mood-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          document.querySelectorAll('.mood-btn').forEach(b => b.classList.remove('selected'));
+          btn.classList.add('selected');
+          moodPrefix = `[Mood: ${btn.dataset.mood} ${btn.dataset.emoji}] `;
+          dismissMood();
+        });
+      });
+    }
+
+    function dismissMood() {
+      localStorage.setItem('last_mood_date', today());
+      $moodSel.classList.remove('show');
+    }
+
+    // ── Check-in card ──────────────────────────────────────────────────────────
+    function setupCheckin() {
+      document.getElementById('checkin-btn').addEventListener('click', () => {
+        $checkin.classList.remove('show');
+        sendToChat('Daily check-in');
+      });
+    }
+
+    // ── Input ──────────────────────────────────────────────────────────────────
+    function setupInput() {
+      $msgInput.addEventListener('input', () => {
+        $msgInput.style.height = 'auto';
+        $msgInput.style.height = Math.min($msgInput.scrollHeight, 120) + 'px';
+      });
+      $msgInput.addEventListener('keydown', e => {
+        if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend(); }
+      });
+      $sendBtn.addEventListener('click', handleSend);
+    }
+
+    async function handleSend() {
+      const text = $msgInput.value.trim();
+      if (!text || $sendBtn.disabled) return;
+      $msgInput.value = '';
+      $msgInput.style.height = 'auto';
+      await sendToChat(text);
+      $msgInput.focus();
+    }
+
+    // ==========================================================================
+    // CHAT
+    // ==========================================================================
+    async function sendToChat(text) {
+      const fullMsg = moodPrefix + text;
+      moodPrefix = '';
+
+      $checkin.classList.remove('show');
+      addUserBubble(text);
+      scrollBottom();
+
+      $sendBtn.disabled = true;
+      const loader = addLoader();
+
+      try {
+        const data = await apiSend(fullMsg);
+        loader.remove();
+        addCoachBubble(data.reply, data.provider_used, data.intent);
+
+        if (typeof data.streak_days === 'number') {
+          streakDays = data.streak_days;
+          localStorage.setItem('streak_days', streakDays);
+          updateHeader();
+        }
+        localStorage.setItem('last_message_date', today());
+
+      } catch (_) {
+        loader.remove();
+        addCoachBubble('Connection lost. Check your server is running.', null, null, true);
+      } finally {
+        $sendBtn.disabled = false;
+        scrollBottom();
+      }
+    }
+
+    function addUserBubble(text) {
+      const row = Object.assign(document.createElement('div'), { className: 'msg user' });
+      const bub = Object.assign(document.createElement('div'), { className: 'bubble' });
+      bub.textContent = text;
+      row.appendChild(bub);
+      $messages.appendChild(row);
+    }
+
+    function addCoachBubble(text, provider, intent, isError = false) {
+      const row = Object.assign(document.createElement('div'), { className: 'msg coach' });
+      const bub = Object.assign(document.createElement('div'), { className: `bubble${isError ? ' error' : ''}` });
+      bub.textContent = text;
+      row.appendChild(bub);
+
+      if (!isError && (provider || (intent && intent !== 'onboarding'))) {
+        const pills = document.createElement('div');
+        pills.className = 'msg-pills';
+        if (provider) {
+          const p = Object.assign(document.createElement('span'), { className: 'pill pill-provider' });
+          p.textContent = provider;
+          pills.appendChild(p);
+        }
+        if (intent && intent !== 'onboarding') {
+          const p = Object.assign(document.createElement('span'), { className: `pill pill-intent ${intent}` });
+          p.textContent = intent;
+          pills.appendChild(p);
+        }
+        row.appendChild(pills);
+      }
+      $messages.appendChild(row);
+    }
+
+    function addLoader() {
+      const el = document.createElement('div');
+      el.className = 'dots-bubble';
+      el.innerHTML = '<div class="dot"></div><div class="dot"></div><div class="dot"></div>';
+      $messages.appendChild(el);
+      scrollBottom();
+      return el;
+    }
+
+    function scrollBottom() { $messages.scrollTop = $messages.scrollHeight; }
+
+    // ==========================================================================
+    // API
+    // ==========================================================================
+    async function apiSend(message) {
+      const res = await fetch(`${API}/api/coach`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ session_id: sessionId, message }),
+      });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      return res.json();
+    }
+  </script>
 </body>
 </html>
