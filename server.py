@@ -202,6 +202,30 @@ def log_chat(session_id: str, user_message: str, coach_reply: str, provider: str
         print(f"Error logging chat: {e}")
 
 
+def load_history_from_db(session_id: str) -> list:
+    """Rebuild conversation history from chat_logs after a server restart."""
+    try:
+        result = (
+            supabase.table("chat_logs")
+            .select("user_message, coach_reply, created_at")
+            .eq("session_id", session_id)
+            .order("created_at", desc=True)
+            .limit(5)  # last 5 exchanges = 10 messages
+            .execute()
+        )
+        if not result.data:
+            return []
+        messages = []
+        for row in reversed(result.data):  # chronological order
+            messages.append({"role": "user",      "content": row["user_message"]})
+            messages.append({"role": "assistant",  "content": row["coach_reply"]})
+        print(f"Loaded {len(messages)} messages from DB for session {session_id}")
+        return messages
+    except Exception as e:
+        print(f"Error loading history from DB: {e}")
+        return []
+
+
 def calculate_streak(session_id: str) -> int:
     try:
         result = (
@@ -349,8 +373,11 @@ async def coach(request: Request):
     # Classify intent before generating the response
     intent = classify_intent(user_message)
 
-    # Update conversation history
-    history = conversation_history.setdefault(session_id, [])
+    # Restore history from DB if server restarted and in-memory cache is empty
+    if session_id not in conversation_history:
+        conversation_history[session_id] = load_history_from_db(session_id)
+
+    history = conversation_history[session_id]
     history.append({"role": "user", "content": user_message})
     if len(history) > MAX_HISTORY:
         conversation_history[session_id] = history[-MAX_HISTORY:]
