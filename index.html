@@ -34,17 +34,10 @@
       display: flex; flex-direction: column; align-items: center; justify-content: center;
       padding: 2rem 1.5rem;
     }
-
-    .ob-step {
-      display: none; flex-direction: column; align-items: center;
-      width: 100%; max-width: 400px; text-align: center;
-      animation: fadeUp 0.25s ease;
-    }
+    .ob-step { display: none; flex-direction: column; align-items: center; width: 100%; max-width: 400px; text-align: center; animation: fadeUp 0.25s ease; }
     .ob-step.active { display: flex; }
-
     .ob-heading { font-size: 2rem; font-weight: 800; letter-spacing: -0.02em; margin-bottom: 0.5rem; }
     .ob-sub     { color: var(--secondary); font-size: 0.9rem; margin-bottom: 2rem; }
-
     .ob-input {
       width: 100%; background: var(--card); border: 1.5px solid var(--border);
       border-radius: var(--r-card); color: var(--text); font-family: 'Inter', sans-serif;
@@ -53,7 +46,6 @@
     }
     .ob-input:focus { outline: none; border-color: var(--purple); }
     .ob-input::placeholder { color: var(--secondary); }
-
     .btn {
       background: var(--purple); border: none; border-radius: var(--r-card);
       color: #fff; cursor: pointer; font-family: 'Inter', sans-serif;
@@ -63,37 +55,27 @@
     .btn:hover  { opacity: 0.88; }
     .btn:active { transform: scale(0.98); }
     .btn:disabled { opacity: 0.4; cursor: not-allowed; }
-
     .style-cards { display: flex; flex-direction: column; gap: 0.75rem; width: 100%; margin-bottom: 1.25rem; }
-
     .style-card {
       background: var(--card); border: 1.5px solid var(--border);
       border-radius: var(--r-card); cursor: pointer; padding: 1.1rem 1.25rem;
-      text-align: left; width: 100%; color: var(--text);
-      font-family: 'Inter', sans-serif;
+      text-align: left; width: 100%; color: var(--text); font-family: 'Inter', sans-serif;
       transition: border-color 200ms, background 200ms, transform 100ms;
     }
     .style-card:hover   { border-color: var(--purple); }
     .style-card:active  { transform: scale(0.98); }
     .style-card.selected { border-color: var(--purple); background: rgba(108,99,255,0.12); }
-
     .style-card-title { font-size: 0.75rem; font-weight: 700; letter-spacing: 0.1em; color: var(--purple); margin-bottom: 0.3rem; }
     .style-card-desc  { font-size: 0.88rem; color: var(--secondary); }
-
     .checkmark-circle {
       width: 80px; height: 80px; border-radius: 50%; background: var(--success);
-      display: flex; align-items: center; justify-content: center;
-      font-size: 2.5rem; margin-bottom: 1.5rem;
+      display: flex; align-items: center; justify-content: center; font-size: 2.5rem; margin-bottom: 1.5rem;
       animation: popIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
     }
     .goal-echo { color: var(--purple); font-weight: 600; font-size: 0.95rem; margin-top: 0.5rem; }
 
     /* ── MAIN APP ───────────────────────────────────────────────────────────── */
-    #app {
-      width: 100%; max-width: 480px;
-      height: 100vh; height: 100dvh;
-      display: flex; flex-direction: column;
-    }
+    #app { width: 100%; max-width: 480px; height: 100vh; height: 100dvh; display: flex; flex-direction: column; }
 
     /* ── HEADER ─────────────────────────────────────────────────────────────── */
     #header {
@@ -101,9 +83,7 @@
       flex-shrink: 0; padding: 1rem 1.25rem;
       border-bottom: 1px solid var(--border); background: var(--bg);
     }
-
     .app-name { font-size: 0.95rem; font-weight: 800; letter-spacing: 0.18em; color: var(--purple); }
-
     #streak-btn {
       background: rgba(0,196,140,0.1); border: 1px solid rgba(0,196,140,0.25);
       border-radius: 20px; color: var(--success); cursor: pointer;
@@ -124,7 +104,6 @@
       box-shadow: 0 12px 40px rgba(0,0,0,0.6);
     }
     #stats-drawer.open { transform: translateX(-50%) translateY(0); }
-
     .drawer-close {
       position: absolute; top: 0.85rem; right: 1rem;
       background: var(--border); border: none; border-radius: 50%;
@@ -132,63 +111,45 @@
       height: 28px; width: 28px; transition: background 200ms;
     }
     .drawer-close:hover { background: #3a3a3a; }
-
     .drawer-streak-num   { font-size: 3.5rem; font-weight: 800; color: var(--success); text-align: center; line-height: 1; }
     .drawer-streak-label { text-align: center; color: var(--secondary); font-size: 0.78rem; margin-bottom: 1.1rem; }
-
     .drawer-motivation {
       background: var(--bg); border-left: 3px solid var(--purple);
       border-radius: 8px; color: var(--secondary); font-size: 0.83rem;
       font-style: italic; padding: 0.7rem 1rem; margin-bottom: 1.1rem;
     }
-
     .drawer-rows { display: flex; flex-direction: column; gap: 0.55rem; }
-
     .drawer-row {
       display: flex; align-items: center; justify-content: space-between;
       background: var(--bg); border-radius: 10px; padding: 0.65rem 1rem;
     }
     .drawer-label { color: var(--secondary); font-size: 0.72rem; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; }
     .drawer-value { font-size: 0.88rem; font-weight: 500; max-width: 60%; text-align: right; }
-
     .style-badge { border-radius: 20px; font-size: 0.72rem; font-weight: 600; padding: 0.2rem 0.65rem; }
     .style-badge.tough-love { background: rgba(255,107,107,0.15); color: var(--danger); }
     .style-badge.balanced   { background: rgba(108,99,255,0.15);  color: var(--purple); }
     .style-badge.gentle     { background: rgba(0,196,140,0.15);   color: var(--success); }
 
     /* ── SCREENS ────────────────────────────────────────────────────────────── */
-    .screen {
-      flex: 1; min-height: 0;
-      display: flex; flex-direction: column;
-      overflow: hidden;
-    }
+    .screen { flex: 1; min-height: 0; display: flex; flex-direction: column; overflow: hidden; }
 
     /* ── CHAT SCREEN ────────────────────────────────────────────────────────── */
     #mood-selector {
       flex-shrink: 0; background: var(--card);
-      border-bottom: 1px solid var(--border);
-      padding: 0.9rem 1.1rem; display: none;
+      border-bottom: 1px solid var(--border); padding: 0.9rem 1.1rem; display: none;
     }
     #mood-selector.show { display: block; }
-
     .mood-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.75rem; }
     .mood-heading { font-size: 0.82rem; font-weight: 600; }
-
-    .mood-dismiss {
-      background: none; border: none; color: var(--secondary);
-      cursor: pointer; font-size: 0.95rem; padding: 0.2rem;
-    }
-
+    .mood-dismiss { background: none; border: none; color: var(--secondary); cursor: pointer; font-size: 0.95rem; padding: 0.2rem; }
     .mood-emojis { display: flex; gap: 0.45rem; }
-
     .mood-btn {
       background: var(--bg); border: 1.5px solid var(--border); border-radius: 12px;
       cursor: pointer; display: flex; flex-direction: column; align-items: center;
       flex: 1; padding: 0.55rem 0.2rem; transition: border-color 200ms, background 200ms;
     }
-    .mood-btn:hover   { border-color: var(--purple); }
+    .mood-btn:hover    { border-color: var(--purple); }
     .mood-btn.selected { border-color: var(--purple); background: rgba(108,99,255,0.12); }
-
     .mood-emoji { font-size: 1.4rem; line-height: 1; margin-bottom: 0.2rem; }
     .mood-label { color: var(--secondary); font-size: 0.58rem; font-weight: 500; text-align: center; }
 
@@ -198,11 +159,9 @@
       border-radius: var(--r-card); padding: 1.25rem; display: none; text-align: center;
     }
     #checkin-card.show { display: block; }
-
     .checkin-flame { font-size: 1.75rem; margin-bottom: 0.4rem; }
     .checkin-title { font-size: 0.95rem; font-weight: 700; margin-bottom: 0.25rem; }
     .checkin-sub   { color: var(--secondary); font-size: 0.8rem; margin-bottom: 0.9rem; }
-
     .btn-sm {
       background: var(--purple); border: none; border-radius: 12px;
       color: #fff; cursor: pointer; font-family: 'Inter', sans-serif;
@@ -213,28 +172,21 @@
 
     #messages {
       flex: 1; overflow-y: auto; padding: 1rem;
-      display: flex; flex-direction: column; gap: 0.75rem;
-      scroll-behavior: smooth;
+      display: flex; flex-direction: column; gap: 0.75rem; scroll-behavior: smooth;
     }
-
     .msg { display: flex; flex-direction: column; max-width: 80%; animation: fadeUp 0.2s ease; }
     .msg.user  { align-self: flex-end;  align-items: flex-end; }
     .msg.coach { align-self: flex-start; align-items: flex-start; }
-
     .bubble {
-      border-radius: var(--r-bubble);
-      font-size: 0.92rem; line-height: 1.55;
-      padding: 0.75rem 1rem;
-      white-space: pre-wrap; word-break: break-word;
+      border-radius: var(--r-bubble); font-size: 0.92rem; line-height: 1.55;
+      padding: 0.75rem 1rem; white-space: pre-wrap; word-break: break-word;
     }
     .msg.user  .bubble { background: var(--purple); color: #fff; border-bottom-right-radius: 4px; }
     .msg.coach .bubble { background: var(--card); border: 1px solid var(--border); color: var(--text); border-bottom-left-radius: 4px; }
     .msg.coach .bubble.error { border-color: var(--danger); color: var(--danger); }
-
     .msg-pills { display: flex; flex-wrap: wrap; gap: 0.35rem; margin-top: 0.3rem; }
-
     .pill { border-radius: 6px; font-size: 0.63rem; font-weight: 600; letter-spacing: 0.04em; padding: 0.18rem 0.5rem; text-transform: uppercase; }
-    .pill-provider { background: rgba(255,255,255,0.07); color: var(--secondary); }
+    .pill-provider            { background: rgba(255,255,255,0.07); color: var(--secondary); }
     .pill-intent              { background: rgba(255,255,255,0.07); color: var(--secondary); }
     .pill-intent.checkin      { background: rgba(99,149,255,0.15);  color: #6395FF; }
     .pill-intent.motivation   { background: rgba(0,196,140,0.15);   color: var(--success); }
@@ -242,79 +194,61 @@
     .pill-intent.relapse      { background: rgba(255,107,107,0.15); color: var(--danger); }
     .pill-intent.task_request { background: rgba(108,99,255,0.15);  color: var(--purple); }
     .pill-intent.task_update  { background: rgba(0,196,140,0.15);   color: var(--success); }
-
     .dots-bubble {
-      align-self: flex-start;
-      background: var(--card); border: 1px solid var(--border);
+      align-self: flex-start; background: var(--card); border: 1px solid var(--border);
       border-radius: var(--r-bubble); border-bottom-left-radius: 4px;
-      display: flex; gap: 5px; padding: 0.75rem 1rem;
-      animation: fadeUp 0.2s ease;
+      display: flex; gap: 5px; padding: 0.75rem 1rem; animation: fadeUp 0.2s ease;
     }
-    .dot {
-      width: 7px; height: 7px; border-radius: 50%; background: var(--secondary);
-      animation: dotPulse 1.2s infinite;
-    }
+    .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--secondary); animation: dotPulse 1.2s infinite; }
     .dot:nth-child(2) { animation-delay: 0.2s; }
     .dot:nth-child(3) { animation-delay: 0.4s; }
 
     #bottom-bar {
       flex-shrink: 0; display: flex; align-items: flex-end; gap: 0.6rem;
       background: var(--bg); border-top: 1px solid var(--border);
-      padding: 0.75rem 1rem;
-      padding-bottom: max(0.75rem, env(safe-area-inset-bottom));
+      padding: 0.75rem 1rem; padding-bottom: max(0.75rem, env(safe-area-inset-bottom));
     }
-
     #msg-input {
       flex: 1; background: var(--card); border: 1.5px solid var(--border);
       border-radius: 20px; color: var(--text); font-family: 'Inter', sans-serif;
       font-size: 0.95rem; line-height: 1.5; max-height: 120px;
-      overflow-y: auto; padding: 0.6rem 1rem; resize: none;
-      transition: border-color 200ms;
+      overflow-y: auto; padding: 0.6rem 1rem; resize: none; transition: border-color 200ms;
     }
-    #msg-input:focus    { outline: none; border-color: var(--purple); }
+    #msg-input:focus { outline: none; border-color: var(--purple); }
     #msg-input::placeholder { color: var(--secondary); }
-
     #send-btn {
       align-items: center; background: var(--purple); border: none; border-radius: 50%;
       color: #fff; cursor: pointer; display: flex; flex-shrink: 0;
-      font-size: 1.1rem; font-weight: 700;
-      height: 40px; width: 40px; justify-content: center;
+      font-size: 1.1rem; font-weight: 700; height: 40px; width: 40px; justify-content: center;
       transition: opacity 200ms, transform 100ms;
     }
     #send-btn:hover   { opacity: 0.85; }
     #send-btn:active  { transform: scale(0.92); }
     #send-btn:disabled { opacity: 0.35; cursor: not-allowed; }
 
-    /* ── COMMITMENTS SCREEN ─────────────────────────────────────────────────── */
-    #screen-commitments {
-      overflow-y: auto;
-      padding: 1rem;
-      gap: 0.6rem;
-      display: flex;
-      flex-direction: column;
-    }
+    /* ── SHARED SCROLL SCREENS ──────────────────────────────────────────────── */
+    .scroll-screen { overflow-y: auto; padding: 1rem; display: flex; flex-direction: column; gap: 0.6rem; }
 
     .section-label {
       font-size: 0.68rem; font-weight: 700; letter-spacing: 0.12em;
-      color: var(--secondary); text-transform: uppercase;
-      padding: 0.5rem 0 0.1rem;
+      color: var(--secondary); text-transform: uppercase; padding: 0.5rem 0 0.1rem;
     }
 
+    .empty-state { display: flex; flex-direction: column; align-items: center; text-align: center; padding: 3.5rem 1.5rem; gap: 0.7rem; }
+    .empty-icon  { font-size: 2.5rem; }
+    .empty-title { font-size: 1rem; font-weight: 700; }
+    .empty-sub   { font-size: 0.83rem; color: var(--secondary); line-height: 1.55; }
+
+    /* ── COMMITMENT CARDS ───────────────────────────────────────────────────── */
     .cc {
       background: var(--card); border: 1px solid var(--border);
       border-radius: var(--r-card); padding: 1rem 1.1rem;
       display: flex; flex-direction: column; gap: 0.6rem;
-      animation: fadeUp 0.2s ease;
-      transition: opacity 300ms;
+      animation: fadeUp 0.2s ease; transition: opacity 300ms;
     }
     .cc.logged { opacity: 0.55; }
-
-    .cc-top {
-      display: flex; align-items: flex-start;
-      justify-content: space-between; gap: 0.5rem;
-    }
+    .cc-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 0.5rem; }
     .cc-top-left { display: flex; align-items: flex-start; gap: 0.45rem; flex: 1; min-width: 0; }
-
     .cc-type {
       flex-shrink: 0; margin-top: 2px;
       font-size: 0.58rem; font-weight: 700; letter-spacing: 0.07em;
@@ -323,20 +257,14 @@
     .cc-type.do       { background: rgba(108,99,255,0.2); color: var(--purple); }
     .cc-type.abstain  { background: rgba(255,107,107,0.2); color: var(--danger); }
     .cc-type.one-time { background: rgba(0,196,140,0.2); color: var(--success); }
-
-    .cc-title { font-size: 0.92rem; font-weight: 600; line-height: 1.3; }
-
+    .cc-title  { font-size: 0.92rem; font-weight: 600; line-height: 1.3; }
     .cc-streak { font-size: 0.8rem; font-weight: 700; white-space: nowrap; flex-shrink: 0; }
     .cc-streak.do       { color: var(--success); }
     .cc-streak.abstain  { color: var(--warning); }
     .cc-streak.one-time { color: var(--secondary); }
-
     .cc-bottom { display: flex; align-items: center; justify-content: space-between; }
-
-    .cc-freq { font-size: 0.72rem; color: var(--secondary); }
-
+    .cc-freq   { font-size: 0.72rem; color: var(--secondary); }
     .cc-actions { display: flex; gap: 0.4rem; }
-
     .cc-btn {
       border: none; border-radius: 10px; cursor: pointer;
       font-family: 'Inter', sans-serif; font-size: 0.75rem; font-weight: 600;
@@ -348,27 +276,57 @@
     .cc-btn.lapsed { background: rgba(255,107,107,0.15); color: var(--danger); }
     .cc-btn.done:not(:disabled):hover   { background: rgba(0,196,140,0.28); }
     .cc-btn.lapsed:not(:disabled):hover { background: rgba(255,107,107,0.28); }
-
-    .cc-status-chip {
-      font-size: 0.73rem; font-weight: 600; border-radius: 10px;
-      padding: 0.35rem 0.72rem;
-    }
+    .cc-status-chip { font-size: 0.73rem; font-weight: 600; border-radius: 10px; padding: 0.35rem 0.72rem; }
     .cc-status-chip.completed { background: rgba(0,196,140,0.12); color: var(--success); }
     .cc-status-chip.lapsed    { background: rgba(255,107,107,0.12); color: var(--danger); }
     .cc-status-chip.skipped   { background: rgba(160,160,160,0.1); color: var(--secondary); }
 
-    .empty-state {
-      display: flex; flex-direction: column; align-items: center;
-      text-align: center; padding: 3.5rem 1.5rem; gap: 0.7rem;
+    /* ── GOALS SCREEN ───────────────────────────────────────────────────────── */
+    .goal-card {
+      background: var(--card); border: 1px solid var(--border);
+      border-radius: var(--r-card); padding: 1rem 1.1rem;
+      display: flex; align-items: center; justify-content: space-between; gap: 0.75rem;
+      animation: fadeUp 0.2s ease;
     }
-    .empty-icon  { font-size: 2.5rem; }
-    .empty-title { font-size: 1rem; font-weight: 700; }
-    .empty-sub   { font-size: 0.83rem; color: var(--secondary); line-height: 1.55; }
+    .goal-card-title { font-size: 0.95rem; font-weight: 600; flex: 1; }
+    .goal-remove-btn {
+      background: none; border: 1px solid var(--border); border-radius: 8px;
+      color: var(--secondary); cursor: pointer; font-size: 0.75rem;
+      padding: 0.3rem 0.6rem; flex-shrink: 0; transition: border-color 200ms, color 200ms;
+    }
+    .goal-remove-btn:hover { border-color: var(--danger); color: var(--danger); }
 
-    .cc-skeleton {
+    .add-goal-row {
+      display: flex; gap: 0.6rem; margin-top: 0.4rem;
+    }
+    .add-goal-input {
+      flex: 1; background: var(--card); border: 1.5px solid var(--border);
+      border-radius: var(--r-card); color: var(--text); font-family: 'Inter', sans-serif;
+      font-size: 0.92rem; padding: 0.7rem 1rem; transition: border-color 200ms;
+    }
+    .add-goal-input:focus { outline: none; border-color: var(--purple); }
+    .add-goal-input::placeholder { color: var(--secondary); }
+    .add-goal-btn {
+      background: var(--purple); border: none; border-radius: var(--r-card);
+      color: #fff; cursor: pointer; font-family: 'Inter', sans-serif;
+      font-size: 0.88rem; font-weight: 600; padding: 0.7rem 1.1rem;
+      transition: opacity 200ms; white-space: nowrap; flex-shrink: 0;
+    }
+    .add-goal-btn:hover    { opacity: 0.88; }
+    .add-goal-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+    /* goal badge on commitment cards */
+    .cc-goal-badge {
+      font-size: 0.65rem; font-weight: 600; color: var(--purple);
+      background: rgba(108,99,255,0.12); border-radius: 5px;
+      padding: 0.12rem 0.45rem; white-space: nowrap; overflow: hidden;
+      text-overflow: ellipsis; max-width: 140px;
+    }
+
+    /* ── SKELETON ───────────────────────────────────────────────────────────── */
+    .skeleton {
       background: linear-gradient(90deg, var(--card) 25%, #222 50%, var(--card) 75%);
-      background-size: 200% 100%;
-      animation: shimmer 1.3s infinite;
+      background-size: 200% 100%; animation: shimmer 1.3s infinite;
       border-radius: var(--r-card); height: 82px;
     }
 
@@ -378,52 +336,39 @@
       background: var(--bg); border-top: 1px solid var(--border);
       padding-bottom: max(0.4rem, env(safe-area-inset-bottom));
     }
-
     .tab-btn {
       flex: 1; background: none; border: none; color: var(--secondary);
-      cursor: pointer; display: flex; flex-direction: column;
-      align-items: center; gap: 0.22rem;
-      padding: 0.65rem 0.5rem 0.45rem;
-      font-family: 'Inter', sans-serif;
+      cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 0.22rem;
+      padding: 0.65rem 0.5rem 0.45rem; font-family: 'Inter', sans-serif;
       position: relative; transition: color 150ms;
     }
     .tab-btn.active { color: var(--purple); }
-
     .tab-icon  { font-size: 1.25rem; line-height: 1; }
     .tab-label { font-size: 0.62rem; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; }
-
     .tab-badge {
       position: absolute; top: 0.38rem; right: calc(50% - 0.75rem - 8px);
       background: var(--danger); color: #fff;
       font-size: 0.58rem; font-weight: 700;
-      min-width: 15px; height: 15px; border-radius: 8px;
-      padding: 0 0.28rem;
+      min-width: 15px; height: 15px; border-radius: 8px; padding: 0 0.28rem;
       display: flex; align-items: center; justify-content: center;
     }
 
     /* ── ANIMATIONS ─────────────────────────────────────────────────────────── */
     @keyframes fadeUp  { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
     @keyframes popIn   { 0% { transform: scale(0) rotate(-15deg); opacity: 0; } 100% { transform: scale(1) rotate(0); opacity: 1; } }
-    @keyframes dotPulse {
-      0%, 80%, 100% { opacity: 0.3; transform: scale(0.8); }
-      40%           { opacity: 1;   transform: scale(1); }
-    }
+    @keyframes dotPulse { 0%, 80%, 100% { opacity: 0.3; transform: scale(0.8); } 40% { opacity: 1; transform: scale(1); } }
     @keyframes shimmer { 0% { background-position: -200% 0; } 100% { background-position: 200% 0; } }
   </style>
 </head>
 <body>
 
-  <!-- ── STATS DRAWER (fixed overlay) ─────────────────────────────────────── -->
+  <!-- ── STATS DRAWER ─────────────────────────────────────────────────────── -->
   <div id="stats-drawer">
     <button class="drawer-close" id="drawer-close">✕</button>
     <div class="drawer-streak-num" id="drawer-streak">0</div>
     <div class="drawer-streak-label">🔥 day streak</div>
     <div class="drawer-motivation" id="drawer-motivation"></div>
     <div class="drawer-rows">
-      <div class="drawer-row">
-        <span class="drawer-label">Goal</span>
-        <span class="drawer-value" id="drawer-goal">—</span>
-      </div>
       <div class="drawer-row">
         <span class="drawer-label">Style</span>
         <span class="drawer-value"><span id="drawer-style" class="style-badge">—</span></span>
@@ -436,11 +381,9 @@
     <div id="ob-1" class="ob-step active">
       <h1 class="ob-heading">What's your goal?</h1>
       <p class="ob-sub">Be specific. Vague goals get vague results.</p>
-      <textarea id="ob-goal" class="ob-input" rows="3"
-        placeholder="e.g. Run 5km every day without skipping"></textarea>
+      <textarea id="ob-goal" class="ob-input" rows="3" placeholder="e.g. Run 5km every day without skipping"></textarea>
       <button id="ob-continue" class="btn">Continue</button>
     </div>
-
     <div id="ob-2" class="ob-step">
       <h1 class="ob-heading">How should I coach you?</h1>
       <p class="ob-sub">Choose your coaching style.</p>
@@ -460,7 +403,6 @@
       </div>
       <button id="ob-letsgo" class="btn hidden">Let's Go</button>
     </div>
-
     <div id="ob-3" class="ob-step">
       <div class="checkmark-circle">✓</div>
       <h1 class="ob-heading">You're all set.</h1>
@@ -483,33 +425,20 @@
           <button class="mood-dismiss" id="mood-dismiss">✕</button>
         </div>
         <div class="mood-emojis">
-          <button class="mood-btn" data-mood="Struggling" data-emoji="😫">
-            <span class="mood-emoji">😫</span><span class="mood-label">Struggling</span>
-          </button>
-          <button class="mood-btn" data-mood="Low" data-emoji="😕">
-            <span class="mood-emoji">😕</span><span class="mood-label">Low</span>
-          </button>
-          <button class="mood-btn" data-mood="Neutral" data-emoji="😐">
-            <span class="mood-emoji">😐</span><span class="mood-label">Neutral</span>
-          </button>
-          <button class="mood-btn" data-mood="Good" data-emoji="🙂">
-            <span class="mood-emoji">🙂</span><span class="mood-label">Good</span>
-          </button>
-          <button class="mood-btn" data-mood="Strong" data-emoji="💪">
-            <span class="mood-emoji">💪</span><span class="mood-label">Strong</span>
-          </button>
+          <button class="mood-btn" data-mood="Struggling" data-emoji="😫"><span class="mood-emoji">😫</span><span class="mood-label">Struggling</span></button>
+          <button class="mood-btn" data-mood="Low"        data-emoji="😕"><span class="mood-emoji">😕</span><span class="mood-label">Low</span></button>
+          <button class="mood-btn" data-mood="Neutral"    data-emoji="😐"><span class="mood-emoji">😐</span><span class="mood-label">Neutral</span></button>
+          <button class="mood-btn" data-mood="Good"       data-emoji="🙂"><span class="mood-emoji">🙂</span><span class="mood-label">Good</span></button>
+          <button class="mood-btn" data-mood="Strong"     data-emoji="💪"><span class="mood-emoji">💪</span><span class="mood-label">Strong</span></button>
         </div>
       </div>
-
       <div id="checkin-card">
         <div class="checkin-flame">🔥</div>
         <div class="checkin-title">Check in for today</div>
         <div class="checkin-sub">How's your discipline holding up?</div>
         <button class="btn-sm" id="checkin-btn">Start Check-in</button>
       </div>
-
       <div id="messages"></div>
-
       <div id="bottom-bar">
         <textarea id="msg-input" placeholder="Message your coach…" rows="1"></textarea>
         <button id="send-btn">→</button>
@@ -517,7 +446,10 @@
     </div>
 
     <!-- Commitments Screen -->
-    <div id="screen-commitments" class="screen hidden"></div>
+    <div id="screen-commitments" class="screen hidden scroll-screen"></div>
+
+    <!-- Goals Screen -->
+    <div id="screen-goals" class="screen hidden scroll-screen"></div>
 
     <!-- Tab Bar -->
     <nav id="tab-bar">
@@ -527,8 +459,12 @@
       </button>
       <button class="tab-btn" data-tab="commitments" id="tab-commitments-btn">
         <span class="tab-icon">✓</span>
-        <span class="tab-label">Commitments</span>
+        <span class="tab-label">Habits</span>
         <span class="tab-badge hidden" id="chase-badge">0</span>
+      </button>
+      <button class="tab-btn" data-tab="goals">
+        <span class="tab-icon">🎯</span>
+        <span class="tab-label">Goals</span>
       </button>
     </nav>
   </div>
@@ -543,17 +479,11 @@
     let streakDays = parseInt(localStorage.getItem('streak_days') || '0', 10);
     let moodPrefix = '';
 
-    if (!sessionId) {
-      sessionId = crypto.randomUUID();
-      localStorage.setItem('session_id', sessionId);
-    }
+    if (!sessionId) { sessionId = crypto.randomUUID(); localStorage.setItem('session_id', sessionId); }
 
-    // Today's commitment logs: { [id]: 'completed' | 'lapsed' | 'skipped' }
-    // Keyed by commitment id; reset each day
     function getTodayLogs() {
       const raw = JSON.parse(localStorage.getItem('today_logs') || '{}');
-      if (raw._date !== today()) return {};
-      return raw;
+      return raw._date === today() ? raw : {};
     }
     function setTodayLog(id, status) {
       const logs = getTodayLogs();
@@ -562,19 +492,20 @@
       localStorage.setItem('today_logs', JSON.stringify(logs));
     }
 
-    // ── DOM ────────────────────────────────────────────────────────────────────
-    const $ob        = document.getElementById('onboarding');
-    const $app       = document.getElementById('app');
-    const $messages  = document.getElementById('messages');
-    const $msgInput  = document.getElementById('msg-input');
-    const $sendBtn   = document.getElementById('send-btn');
-    const $streakBtn = document.getElementById('streak-btn');
-    const $streakCnt = document.getElementById('streak-count');
-    const $drawer    = document.getElementById('stats-drawer');
-    const $moodSel   = document.getElementById('mood-selector');
-    const $checkin   = document.getElementById('checkin-card');
-    const $scrChat   = document.getElementById('screen-chat');
-    const $scrComm   = document.getElementById('screen-commitments');
+    // ── DOM refs ───────────────────────────────────────────────────────────────
+    const $ob         = document.getElementById('onboarding');
+    const $app        = document.getElementById('app');
+    const $messages   = document.getElementById('messages');
+    const $msgInput   = document.getElementById('msg-input');
+    const $sendBtn    = document.getElementById('send-btn');
+    const $streakBtn  = document.getElementById('streak-btn');
+    const $streakCnt  = document.getElementById('streak-count');
+    const $drawer     = document.getElementById('stats-drawer');
+    const $moodSel    = document.getElementById('mood-selector');
+    const $checkin    = document.getElementById('checkin-card');
+    const $scrChat    = document.getElementById('screen-chat');
+    const $scrComm    = document.getElementById('screen-commitments');
+    const $scrGoals   = document.getElementById('screen-goals');
     const $chaseBadge = document.getElementById('chase-badge');
 
     // ── Boot ───────────────────────────────────────────────────────────────────
@@ -621,24 +552,14 @@
       $letsgo.addEventListener('click', async () => {
         $letsgo.disabled = true;
         $letsgo.textContent = 'Setting up…';
-
         document.getElementById('ob-echo').textContent = `"${pendingGoal}"`;
         showStep(3);
-
         profile = { goal: pendingGoal, coaching_style: pendingStyle, onboarding_complete: true };
         localStorage.setItem('coach_profile', JSON.stringify(profile));
-
         await Promise.all([
-          (async () => {
-            try {
-              await apiSend('Hello');
-              await apiSend(pendingGoal);
-              await apiSend(pendingStyle);
-            } catch (_) {}
-          })(),
+          (async () => { try { await apiSend('Hello'); await apiSend(pendingGoal); await apiSend(pendingStyle); } catch (_) {} })(),
           new Promise(r => setTimeout(r, 2000)),
         ]);
-
         $ob.classList.add('hidden');
         $app.classList.remove('hidden');
         sessionStorage.setItem('first_chat', '1');
@@ -669,37 +590,30 @@
 
     function updateHeader() { $streakCnt.textContent = streakDays; }
 
-    // ── Stats drawer ───────────────────────────────────────────────────────────
+    // ── Drawer ─────────────────────────────────────────────────────────────────
     function setupDrawer() {
       $streakBtn.addEventListener('click', openDrawer);
       document.getElementById('drawer-close').addEventListener('click', closeDrawer);
       document.addEventListener('click', e => {
-        if ($drawer.classList.contains('open') && !$drawer.contains(e.target) && e.target !== $streakBtn)
-          closeDrawer();
+        if ($drawer.classList.contains('open') && !$drawer.contains(e.target) && e.target !== $streakBtn) closeDrawer();
       });
     }
-
     function openDrawer() {
       const lines = [
-        { max: 2,        text: 'Every expert was once a beginner.' },
-        { max: 6,        text: "You're building something real." },
-        { max: 13,       text: 'One week strong. Keep going.' },
+        { max: 2, text: 'Every expert was once a beginner.' },
+        { max: 6, text: "You're building something real." },
+        { max: 13, text: 'One week strong. Keep going.' },
         { max: Infinity, text: "You're in the top 1%. Don't stop now." },
       ];
       const line = lines.find(l => streakDays <= l.max);
-
-      document.getElementById('drawer-streak').textContent    = streakDays;
+      document.getElementById('drawer-streak').textContent     = streakDays;
       document.getElementById('drawer-motivation').textContent = `"${line.text}"`;
-      document.getElementById('drawer-goal').textContent       = profile?.goal || '—';
-
       const $badge   = document.getElementById('drawer-style');
       const styleKey = (profile?.coaching_style || 'balanced').replace(' ', '-');
       $badge.textContent = profile?.coaching_style || '—';
       $badge.className   = `style-badge ${styleKey}`;
-
       $drawer.classList.add('open');
     }
-
     function closeDrawer() { $drawer.classList.remove('open'); }
 
     // ── Daily cards ────────────────────────────────────────────────────────────
@@ -709,7 +623,7 @@
       if (localStorage.getItem('last_message_date') !== t) $checkin.classList.add('show');
     }
 
-    // ── Mood selector ──────────────────────────────────────────────────────────
+    // ── Mood ───────────────────────────────────────────────────────────────────
     function setupMood() {
       document.getElementById('mood-dismiss').addEventListener('click', dismissMood);
       document.querySelectorAll('.mood-btn').forEach(btn => {
@@ -721,13 +635,9 @@
         });
       });
     }
+    function dismissMood() { localStorage.setItem('last_mood_date', today()); $moodSel.classList.remove('show'); }
 
-    function dismissMood() {
-      localStorage.setItem('last_mood_date', today());
-      $moodSel.classList.remove('show');
-    }
-
-    // ── Check-in card ──────────────────────────────────────────────────────────
+    // ── Check-in ───────────────────────────────────────────────────────────────
     function setupCheckin() {
       document.getElementById('checkin-btn').addEventListener('click', () => {
         $checkin.classList.remove('show');
@@ -746,7 +656,6 @@
       });
       $sendBtn.addEventListener('click', handleSend);
     }
-
     async function handleSend() {
       const text = $msgInput.value.trim();
       if (!text || $sendBtn.disabled) return;
@@ -762,13 +671,14 @@
         btn.addEventListener('click', () => switchTab(btn.dataset.tab));
       });
     }
-
     function switchTab(name) {
       document.querySelectorAll('.tab-btn').forEach(b => b.classList.toggle('active', b.dataset.tab === name));
       $scrChat.classList.toggle('hidden', name !== 'chat');
       $scrComm.classList.toggle('hidden', name !== 'commitments');
+      $scrGoals.classList.toggle('hidden', name !== 'goals');
       if (name === 'commitments') loadCommitments();
-      if (name === 'chat') $msgInput.focus();
+      if (name === 'goals')       loadGoals();
+      if (name === 'chat')        $msgInput.focus();
     }
 
     // ==========================================================================
@@ -777,31 +687,22 @@
     async function sendToChat(text) {
       const fullMsg = moodPrefix + text;
       moodPrefix = '';
-
       $checkin.classList.remove('show');
       addUserBubble(text);
       scrollBottom();
-
       $sendBtn.disabled = true;
       const loader = addLoader();
-
       try {
         const data = await apiSend(fullMsg);
         loader.remove();
         addCoachBubble(data.reply, data.provider_used, data.intent);
-
         if (typeof data.streak_days === 'number') {
           streakDays = data.streak_days;
           localStorage.setItem('streak_days', streakDays);
           updateHeader();
         }
         localStorage.setItem('last_message_date', today());
-
-        // New commitment was auto-saved — refresh badge and list
-        if (data.intent === 'task_request') {
-          setTimeout(() => updateChaseBadge(), 600);
-        }
-
+        if (data.intent === 'task_request') setTimeout(() => updateChaseBadge(), 800);
       } catch (_) {
         loader.remove();
         addCoachBubble('Connection lost. Check your server is running.', null, null, true);
@@ -824,7 +725,6 @@
       const bub = Object.assign(document.createElement('div'), { className: `bubble${isError ? ' error' : ''}` });
       bub.textContent = text;
       row.appendChild(bub);
-
       if (!isError && (provider || (intent && intent !== 'onboarding'))) {
         const pills = document.createElement('div');
         pills.className = 'msg-pills';
@@ -851,7 +751,6 @@
       scrollBottom();
       return el;
     }
-
     function scrollBottom() { $messages.scrollTop = $messages.scrollHeight; }
 
     // ==========================================================================
@@ -859,62 +758,53 @@
     // ==========================================================================
     async function loadCommitments() {
       $scrComm.innerHTML = '';
-
-      // Skeleton while loading
-      for (let i = 0; i < 2; i++) {
-        const sk = document.createElement('div');
-        sk.className = 'cc-skeleton';
-        $scrComm.appendChild(sk);
-      }
-
+      for (let i = 0; i < 2; i++) { const sk = document.createElement('div'); sk.className = 'skeleton'; $scrComm.appendChild(sk); }
       try {
-        const res = await fetch(`${API}/api/commitments/${sessionId}`);
-        if (!res.ok) throw new Error();
-        const { commitments } = await res.json();
-        renderCommitments(commitments);
+        const [commRes, goalsRes] = await Promise.all([
+          fetch(`${API}/api/commitments/${sessionId}`),
+          fetch(`${API}/api/goals/${sessionId}`),
+        ]);
+        if (!commRes.ok) throw new Error();
+        const { commitments } = await commRes.json();
+        const goals = goalsRes.ok ? (await goalsRes.json()).goals : [];
+        renderCommitments(commitments, goals);
       } catch (_) {
         $scrComm.innerHTML = '';
-        const err = document.createElement('div');
-        err.className = 'empty-state';
-        err.innerHTML = `<div class="empty-icon">⚠️</div>
-          <div class="empty-title">Couldn't load commitments</div>
-          <div class="empty-sub">Check your server is running.</div>`;
-        $scrComm.appendChild(err);
+        appendEmptyState($scrComm, '⚠️', "Couldn't load habits", 'Check your server is running.');
       }
     }
 
-    function renderCommitments(commitments) {
+    function renderCommitments(commitments, goals) {
       $scrComm.innerHTML = '';
       const logs = getTodayLogs();
 
-      const dueToday = commitments.filter(c => c.due_today);
-      const other    = commitments.filter(c => !c.due_today);
-
       if (commitments.length === 0) {
-        const el = document.createElement('div');
-        el.className = 'empty-state';
-        el.innerHTML = `<div class="empty-icon">🎯</div>
-          <div class="empty-title">No commitments yet</div>
-          <div class="empty-sub">Tell your coach what you want to commit to and it'll show up here automatically.</div>`;
-        $scrComm.appendChild(el);
+        appendEmptyState($scrComm, '🎯', 'No habits yet', 'Tell your coach what you want to commit to and it\'ll show up here automatically.');
         return;
       }
 
-      if (dueToday.length > 0) {
-        addSectionLabel('Today');
-        dueToday.forEach(c => $scrComm.appendChild(buildCard(c, logs[c.id])));
-      }
+      // Build goal lookup
+      const goalMap = {};
+      goals.forEach(g => goalMap[g.id] = g.title);
 
-      if (other.length > 0) {
-        addSectionLabel('All Commitments');
-        other.forEach(c => $scrComm.appendChild(buildCard(c, null, false)));
-      } else if (dueToday.length > 0) {
-        addSectionLabel('All Commitments');
-        const el = document.createElement('div');
-        el.style.cssText = 'color: var(--secondary); font-size: 0.83rem; padding: 0.5rem 0;';
-        el.textContent = 'Everything is due today.';
-        $scrComm.appendChild(el);
-      }
+      // Group by goal_id (null = no goal)
+      const grouped = {};
+      commitments.forEach(c => {
+        const key = c.goal_id || '__none__';
+        (grouped[key] = grouped[key] || []).push(c);
+      });
+
+      // Render goal-linked groups first, then unlinked
+      const goalOrder = goals.map(g => g.id).filter(id => grouped[id]);
+      if (grouped['__none__']) goalOrder.push('__none__');
+
+      goalOrder.forEach(key => {
+        const label = key === '__none__' ? 'No Goal' : goalMap[key] || 'Unknown Goal';
+        addSectionLabel(label);
+        // Due today first
+        const sorted = [...grouped[key]].sort((a, b) => (b.due_today ? 1 : 0) - (a.due_today ? 1 : 0));
+        sorted.forEach(c => $scrComm.appendChild(buildCard(c, logs[c.id])));
+      });
     }
 
     function addSectionLabel(text) {
@@ -929,14 +819,12 @@
       const alreadyLogged = !!loggedStatus;
       card.className = `cc${alreadyLogged ? ' logged' : ''}`;
 
-      const isAbstain  = c.type === 'abstain';
-      const isOneTime  = c.type === 'one-time';
-      const streakIcon = isAbstain ? '✨' : isOneTime ? '' : '🔥';
-      const streakLabel = isAbstain
-        ? `${streakIcon} ${c.streak}d clean`
-        : c.streak > 0 ? `${streakIcon} ${c.streak}d` : '';
-
-      const freqLabel = formatFreq(c);
+      const isAbstain = c.type === 'abstain';
+      const isOneTime = c.type === 'one-time';
+      const streakIcon  = isAbstain ? '✨' : isOneTime ? '' : '🔥';
+      const streakLabel = isAbstain ? `${streakIcon} ${c.streak}d clean` : c.streak > 0 ? `${streakIcon} ${c.streak}d` : '';
+      const freqLabel   = formatFreq(c);
+      const dueBadge    = c.due_today ? '' : '';
 
       card.innerHTML = `
         <div class="cc-top">
@@ -947,12 +835,11 @@
           ${streakLabel ? `<span class="cc-streak ${c.type}">${streakLabel}</span>` : ''}
         </div>
         <div class="cc-bottom">
-          <span class="cc-freq">${freqLabel}</span>
+          <span class="cc-freq">${freqLabel}${c.due_today ? ' · <span style="color:var(--purple);font-weight:600">today</span>' : ''}</span>
           <div class="cc-actions"></div>
         </div>`;
 
       const $actions = card.querySelector('.cc-actions');
-
       if (!showActions) return card;
 
       if (alreadyLogged) {
@@ -960,15 +847,11 @@
         chip.className = `cc-status-chip ${loggedStatus}`;
         chip.textContent = loggedStatus === 'completed' ? '✓ Done' : loggedStatus === 'lapsed' ? '✗ Lapsed' : 'Skipped';
         $actions.appendChild(chip);
-      } else {
-        const doneLabel   = isAbstain  ? '✓ Clean'   : '✓ Done';
-        const lapsedLabel = isAbstain  ? '✗ Slipped' : '✗ Lapsed';
-
-        const doneBtn   = makeLogBtn(doneLabel,   'done',   () => commitLog(c.id, 'completed', card, $actions));
-        const lapsedBtn = makeLogBtn(lapsedLabel, 'lapsed', () => commitLog(c.id, 'lapsed',    card, $actions));
-
-        $actions.appendChild(doneBtn);
-        if (!isOneTime) $actions.appendChild(lapsedBtn);
+      } else if (c.due_today) {
+        const doneLabel   = isAbstain ? '✓ Clean'   : '✓ Done';
+        const lapsedLabel = isAbstain ? '✗ Slipped' : '✗ Lapsed';
+        $actions.appendChild(makeLogBtn(doneLabel,   'done',   () => commitLog(c.id, 'completed', card, $actions)));
+        if (!isOneTime) $actions.appendChild(makeLogBtn(lapsedLabel, 'lapsed', () => commitLog(c.id, 'lapsed', card, $actions)));
       }
 
       return card;
@@ -983,9 +866,7 @@
     }
 
     async function commitLog(id, status, cardEl, actionsEl) {
-      // Disable all buttons immediately
       actionsEl.querySelectorAll('button').forEach(b => b.disabled = true);
-
       try {
         const res = await fetch(`${API}/api/commitments/${id}/log`, {
           method: 'POST',
@@ -993,17 +874,13 @@
           body: JSON.stringify({ session_id: sessionId, status }),
         });
         if (!res.ok) throw new Error();
-
         setTodayLog(id, status);
         cardEl.classList.add('logged');
-
-        // Swap buttons for status chip
         actionsEl.innerHTML = '';
         const chip = document.createElement('span');
         chip.className = `cc-status-chip ${status}`;
         chip.textContent = status === 'completed' ? '✓ Done' : '✗ Lapsed';
         actionsEl.appendChild(chip);
-
         updateChaseBadge();
       } catch (_) {
         actionsEl.querySelectorAll('button').forEach(b => b.disabled = false);
@@ -1022,7 +899,110 @@
       } catch (_) {}
     }
 
-    // ── Helpers ────────────────────────────────────────────────────────────────
+    // ==========================================================================
+    // GOALS
+    // ==========================================================================
+    async function loadGoals() {
+      $scrGoals.innerHTML = '';
+      const sk = document.createElement('div'); sk.className = 'skeleton'; $scrGoals.appendChild(sk);
+      try {
+        const res = await fetch(`${API}/api/goals/${sessionId}`);
+        if (!res.ok) throw new Error();
+        const { goals } = await res.json();
+        renderGoals(goals);
+      } catch (_) {
+        $scrGoals.innerHTML = '';
+        appendEmptyState($scrGoals, '⚠️', "Couldn't load goals", 'Check your server is running.');
+      }
+    }
+
+    function renderGoals(goals) {
+      $scrGoals.innerHTML = '';
+
+      if (goals.length === 0) {
+        appendEmptyState($scrGoals, '🎯', 'No goals yet', 'Add your first goal below.');
+      } else {
+        addSectionLabelTo($scrGoals, 'Active Goals');
+        goals.forEach(g => $scrGoals.appendChild(buildGoalCard(g)));
+      }
+
+      // Add goal row (always shown)
+      const row = document.createElement('div');
+      row.className = 'add-goal-row';
+      row.innerHTML = `<input class="add-goal-input" id="new-goal-input" placeholder="Add a new goal…" type="text">
+                       <button class="add-goal-btn" id="add-goal-btn">Add</button>`;
+      $scrGoals.appendChild(row);
+
+      const $input = document.getElementById('new-goal-input');
+      const $btn   = document.getElementById('add-goal-btn');
+
+      $btn.addEventListener('click', () => submitGoal($input, $btn));
+      $input.addEventListener('keydown', e => { if (e.key === 'Enter') submitGoal($input, $btn); });
+    }
+
+    function buildGoalCard(g) {
+      const card = document.createElement('div');
+      card.className = 'goal-card';
+      card.innerHTML = `<span class="goal-card-title">${escHtml(g.title)}</span>
+                        <button class="goal-remove-btn" data-id="${g.id}">Remove</button>`;
+      card.querySelector('.goal-remove-btn').addEventListener('click', () => removeGoal(g.id, card));
+      return card;
+    }
+
+    async function submitGoal($input, $btn) {
+      const title = $input.value.trim();
+      if (!title) return;
+      $btn.disabled = true;
+      $btn.textContent = '…';
+      try {
+        const res = await fetch(`${API}/api/goals`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ session_id: sessionId, title }),
+        });
+        if (!res.ok) throw new Error();
+        $input.value = '';
+        await loadGoals();
+      } catch (_) {
+        $btn.disabled = false;
+        $btn.textContent = 'Add';
+      }
+    }
+
+    async function removeGoal(id, cardEl) {
+      cardEl.style.opacity = '0.4';
+      try {
+        const res = await fetch(`${API}/api/goals/${id}`, {
+          method: 'DELETE',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ session_id: sessionId }),
+        });
+        if (!res.ok) throw new Error();
+        await loadGoals();
+      } catch (_) {
+        cardEl.style.opacity = '';
+      }
+    }
+
+    function addSectionLabelTo(container, text) {
+      const el = document.createElement('div');
+      el.className = 'section-label';
+      el.textContent = text;
+      container.appendChild(el);
+    }
+
+    // ==========================================================================
+    // HELPERS
+    // ==========================================================================
+    function appendEmptyState(container, icon, title, sub) {
+      const el = document.createElement('div');
+      el.className = 'empty-state';
+      el.innerHTML = `<div class="empty-icon">${icon}</div>
+                      <div class="empty-title">${title}</div>
+                      <div class="empty-sub">${sub}</div>`;
+      container.appendChild(el);
+    }
+
     function formatFreq(c) {
       if (c.frequency === 'daily')         return 'Daily';
       if (c.frequency === 'weekly')        return 'Weekly';
@@ -1032,7 +1012,7 @@
     }
 
     function escHtml(str) {
-      return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+      return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
     }
 
     // ==========================================================================

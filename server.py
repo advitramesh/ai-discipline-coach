@@ -62,21 +62,25 @@ COACHING PHILOSOPHY:
 - Progress is non-linear. Normalize struggle without excusing avoidance.
 
 USER CONTEXT:
-- Goal: {user_goal}
 - Coaching style preference: {coaching_style}
 - Current streak: {streak_days} days
 - Last check-in: {last_checkin}
 - Recent lapse history: {lapse_summary}
 
+GOALS (what the user is working towards):
+{goals_context}
+
 COMMITMENTS & TASKS:
 {commitments_context}
 
 COMMITMENT TRACKING RULES:
-- When the user asks to add a commitment or task, respond helpfully AND include a machine-readable tag at the very end of your reply in this exact format:
-  <commitment>{{"title": "...", "type": "do|abstain|one-time", "frequency": "daily|weekly|specific_days|one-time", "days_of_week": ["mon","tue"], "due_date": "YYYY-MM-DD or null"}}</commitment>
-- Only include the tag when creating a NEW commitment. Never include it for logging, motivation, or chat.
-- "do" = positive habit to build. "abstain" = thing to avoid. "one-time" = single task with optional due date.
-- For specific_days, use lowercase 3-letter abbreviations: mon, tue, wed, thu, fri, sat, sun.
+- When the user asks to add a commitment or task, respond helpfully AND include a
+  machine-readable tag at the very end of your reply in this exact format:
+  <commitment>{{"title": "...", "type": "do|abstain|one-time", "frequency": "daily|weekly|specific_days|one-time", "days_of_week": ["mon","tue"], "due_date": "YYYY-MM-DD or null", "goal_title": "exact goal title or null"}}</commitment>
+- Only include the tag when creating a NEW commitment. Never include it for logging or chat.
+- Set goal_title to the exact title of one of the user's goals if the commitment clearly
+  belongs to a goal. Use null if no goal matches.
+- "do" = positive habit to build. "abstain" = thing to avoid. "one-time" = single task.
 
 For MOTIVATION: Connect to deeper why. Use implementation intentions.
 For LAPSE: Acknowledge, get curious about trigger, find smallest re-entry point.
@@ -110,7 +114,6 @@ Message: {message}"""
 # =============================================================================
 
 def call_llm(messages: list, system_prompt: str) -> tuple[str, str]:
-    """Try Gemini → Groq → Ollama in order. Returns (reply, provider_name)."""
     providers = [
         ("gemini", _call_gemini),
         ("groq", _call_groq),
@@ -195,6 +198,12 @@ def save_user_profile(session_id: str, user_goal: str, coaching_style: str):
             "coaching_style": coaching_style,
             "streak_days": 0,
             "last_checkin": None,
+        }).execute()
+        # Save the onboarding goal into the goals table too
+        supabase.table("goals").insert({
+            "session_id": session_id,
+            "title": user_goal,
+            "active": True,
         }).execute()
     except Exception as e:
         print(f"Error saving profile: {e}")
@@ -289,6 +298,49 @@ def get_lapse_summary(session_id: str) -> str:
 
 
 # =============================================================================
+# GOAL HELPERS
+# =============================================================================
+
+def get_user_goals(session_id: str) -> list:
+    try:
+        result = (
+            supabase.table("goals")
+            .select("*")
+            .eq("session_id", session_id)
+            .eq("active", True)
+            .order("created_at")
+            .execute()
+        )
+        return result.data or []
+    except Exception as e:
+        print(f"Error fetching goals: {e}")
+        return []
+
+
+def resolve_goal_id(session_id: str, goal_title: str) -> str | None:
+    """Match a goal_title string (from LLM) to an actual goal id."""
+    if not goal_title:
+        return None
+    goals = get_user_goals(session_id)
+    needle = goal_title.lower().strip()
+    for g in goals:
+        if g["title"].lower().strip() == needle:
+            return g["id"]
+    # Partial match fallback
+    for g in goals:
+        if needle in g["title"].lower() or g["title"].lower() in needle:
+            return g["id"]
+    return None
+
+
+def build_goals_context(session_id: str) -> str:
+    goals = get_user_goals(session_id)
+    if not goals:
+        return "No goals set yet."
+    return "\n".join(f"  - {g['title']}" for g in goals)
+
+
+# =============================================================================
 # COMMITMENT HELPERS
 # =============================================================================
 
@@ -301,7 +353,7 @@ def is_due_today(commitment: dict) -> bool:
         due = commitment.get("due_date")
         return due is not None and str(due) == str(today)
     if freq == "weekly":
-        return today.weekday() == 0  # Monday by default
+        return today.weekday() == 0
     if freq == "specific_days":
         days = commitment.get("days_of_week") or []
         return DAY_ABBREVS[today.weekday()] in days
@@ -342,7 +394,6 @@ def calculate_commitment_streak(commitment_id: str) -> int:
         while True:
             key = str(check)
             if key not in logged_days:
-                # Allow today to be missing (not yet logged)
                 if check == date.today():
                     check -= timedelta(days=1)
                     continue
@@ -359,7 +410,6 @@ def calculate_commitment_streak(commitment_id: str) -> int:
 
 
 def get_abstinence_streak(commitment_id: str) -> int:
-    """Days since last lapse for abstain-type commitments."""
     try:
         result = (
             supabase.table("commitment_logs")
@@ -371,7 +421,6 @@ def get_abstinence_streak(commitment_id: str) -> int:
             .execute()
         )
         if not result.data:
-            # No lapses ever — streak from commitment creation
             c_result = (
                 supabase.table("commitments")
                 .select("created_at")
@@ -393,7 +442,7 @@ def build_commitments_context(session_id: str) -> str:
     try:
         result = (
             supabase.table("commitments")
-            .select("*")
+            .select("*, goals(title)")
             .eq("session_id", session_id)
             .eq("active", True)
             .execute()
@@ -401,26 +450,23 @@ def build_commitments_context(session_id: str) -> str:
         if not result.data:
             return "No active commitments yet."
 
-        today_commitments = [c for c in result.data if is_due_today(c)]
-        other_commitments = [c for c in result.data if not is_due_today(c)]
+        # Group by goal
+        by_goal: dict[str, list] = {}
+        for c in result.data:
+            goal_title = (c.get("goals") or {}).get("title") or "No goal"
+            by_goal.setdefault(goal_title, []).append(c)
 
         lines = []
-
-        if today_commitments:
-            lines.append("DUE TODAY:")
-            for c in today_commitments:
+        for goal_title, commits in by_goal.items():
+            lines.append(f"{goal_title.upper()}:")
+            for c in commits:
+                due = " (due today)" if is_due_today(c) else ""
                 if c["type"] == "abstain":
                     streak = get_abstinence_streak(c["id"])
-                    lines.append(f"  - [{c['type'].upper()}] {c['title']} — {streak}d clean")
+                    lines.append(f"  - [{c['type'].upper()}] {c['title']} — {streak}d clean{due}")
                 else:
                     streak = calculate_commitment_streak(c["id"])
-                    lines.append(f"  - [{c['type'].upper()}] {c['title']} — {streak}d streak")
-
-        if other_commitments:
-            lines.append("OTHER ACTIVE COMMITMENTS:")
-            for c in other_commitments:
-                freq = c.get("frequency", "")
-                lines.append(f"  - [{c['type'].upper()}] {c['title']} ({freq})")
+                    lines.append(f"  - [{c['type'].upper()}] {c['title']} — {streak}d streak{due}")
 
         return "\n".join(lines) if lines else "No active commitments yet."
     except Exception as e:
@@ -429,7 +475,6 @@ def build_commitments_context(session_id: str) -> str:
 
 
 def extract_and_save_commitment(session_id: str, reply: str) -> str:
-    """Parse <commitment> tag from reply, save to DB, return cleaned reply."""
     match = COMMITMENT_TAG_RE.search(reply)
     if not match:
         return reply
@@ -439,6 +484,9 @@ def extract_and_save_commitment(session_id: str, reply: str) -> str:
 
     try:
         data = json.loads(raw)
+        goal_title = data.get("goal_title")
+        goal_id = resolve_goal_id(session_id, goal_title) if goal_title else None
+
         supabase.table("commitments").insert({
             "session_id": session_id,
             "title": data.get("title", "Untitled"),
@@ -447,8 +495,9 @@ def extract_and_save_commitment(session_id: str, reply: str) -> str:
             "days_of_week": data.get("days_of_week"),
             "due_date": data.get("due_date") if data.get("due_date") not in (None, "null", "") else None,
             "active": True,
+            "goal_id": goal_id,
         }).execute()
-        print(f"Auto-saved commitment for {session_id}: {data.get('title')}")
+        print(f"Auto-saved commitment for {session_id}: {data.get('title')} (goal_id={goal_id})")
     except Exception as e:
         print(f"Error saving auto-commitment: {e}")
 
@@ -509,7 +558,7 @@ def handle_onboarding(session_id: str, user_message: str) -> dict | None:
         save_user_profile(session_id, goal, style)
         onboarding_state[session_id] = 3
         onboarding_data.pop(session_id, None)
-        return None  # fall through to coaching flow
+        return None
 
 
 # =============================================================================
@@ -564,6 +613,7 @@ async def coach(request: Request):
 
     streak = calculate_streak(session_id)
     lapse_summary = get_lapse_summary(session_id)
+    goals_context = build_goals_context(session_id)
     commitments_context = build_commitments_context(session_id)
 
     last_checkin = profile.get("last_checkin") or "Never"
@@ -571,11 +621,11 @@ async def coach(request: Request):
         last_checkin = last_checkin[:10]
 
     system_prompt = COACHING_SYSTEM_PROMPT.format(
-        user_goal=profile.get("user_goal", "Not set"),
         coaching_style=profile.get("coaching_style", "balanced"),
         streak_days=streak,
         last_checkin=last_checkin,
         lapse_summary=lapse_summary,
+        goals_context=goals_context,
         commitments_context=commitments_context,
     )
 
@@ -584,7 +634,6 @@ async def coach(request: Request):
     except RuntimeError as e:
         raise HTTPException(status_code=503, detail=str(e))
 
-    # Strip <commitment> tag and auto-save regardless of classified intent
     reply = extract_and_save_commitment(session_id, reply)
 
     history.append({"role": "assistant", "content": reply})
@@ -599,6 +648,51 @@ async def coach(request: Request):
         "streak_days": streak,
     }
 
+
+# ── Goals ──────────────────────────────────────────────────────────────────────
+
+@app.get("/api/goals/{session_id}")
+async def list_goals(session_id: str):
+    goals = get_user_goals(session_id)
+    return {"goals": goals}
+
+
+@app.post("/api/goals")
+async def create_goal(request: Request):
+    data = await request.json()
+    session_id = data.get("session_id")
+    title = (data.get("title") or "").strip()
+
+    if not session_id:
+        raise HTTPException(status_code=400, detail="session_id is required")
+    if not title:
+        raise HTTPException(status_code=400, detail="title is required")
+
+    try:
+        result = supabase.table("goals").insert({
+            "session_id": session_id,
+            "title": title,
+            "active": True,
+        }).execute()
+        return {"goal": result.data[0] if result.data else {}}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.delete("/api/goals/{goal_id}")
+async def delete_goal(goal_id: str, request: Request):
+    data = await request.json()
+    session_id = data.get("session_id")
+    if not session_id:
+        raise HTTPException(status_code=400, detail="session_id is required")
+    try:
+        supabase.table("goals").update({"active": False}).eq("id", goal_id).eq("session_id", session_id).execute()
+        return {"deleted": True}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+# ── Commitments ────────────────────────────────────────────────────────────────
 
 @app.post("/api/commitments")
 async def create_commitment(request: Request):
@@ -616,6 +710,7 @@ async def create_commitment(request: Request):
             "days_of_week": data.get("days_of_week"),
             "due_date": data.get("due_date"),
             "active": True,
+            "goal_id": data.get("goal_id"),
         }).execute()
         return {"commitment": result.data[0] if result.data else {}}
     except Exception as e:
@@ -627,7 +722,7 @@ async def list_commitments(session_id: str):
     try:
         result = (
             supabase.table("commitments")
-            .select("*")
+            .select("*, goals(id, title)")
             .eq("session_id", session_id)
             .eq("active", True)
             .order("created_at", desc=False)
@@ -638,11 +733,15 @@ async def list_commitments(session_id: str):
         enriched = []
         for c in commitments:
             due_today = is_due_today(c)
-            if c["type"] == "abstain":
-                streak = get_abstinence_streak(c["id"])
-            else:
-                streak = calculate_commitment_streak(c["id"])
-            enriched.append({**c, "due_today": due_today, "streak": streak})
+            streak = get_abstinence_streak(c["id"]) if c["type"] == "abstain" else calculate_commitment_streak(c["id"])
+            goal_info = c.get("goals")
+            enriched.append({
+                **{k: v for k, v in c.items() if k != "goals"},
+                "due_today": due_today,
+                "streak": streak,
+                "goal_id": (goal_info or {}).get("id"),
+                "goal_title": (goal_info or {}).get("title"),
+            })
 
         return {"commitments": enriched}
     except Exception as e:
@@ -653,7 +752,7 @@ async def list_commitments(session_id: str):
 async def log_commitment(commitment_id: str, request: Request):
     data = await request.json()
     session_id = data.get("session_id")
-    status = data.get("status")  # completed | skipped | lapsed
+    status = data.get("status")
     note = data.get("note", "")
     log_date = data.get("date", str(date.today()))
 
@@ -663,7 +762,6 @@ async def log_commitment(commitment_id: str, request: Request):
         raise HTTPException(status_code=400, detail="status must be completed, skipped, or lapsed")
 
     try:
-        # Upsert: one log per commitment per day
         existing = (
             supabase.table("commitment_logs")
             .select("id")
@@ -697,7 +795,6 @@ async def delete_commitment(commitment_id: str, request: Request):
     session_id = data.get("session_id")
     if not session_id:
         raise HTTPException(status_code=400, detail="session_id is required")
-
     try:
         supabase.table("commitments").update({"active": False}).eq("id", commitment_id).eq("session_id", session_id).execute()
         return {"deleted": True}
@@ -711,6 +808,7 @@ async def dashboard(session_id: str):
         profile = get_user_profile(session_id)
         streak = calculate_streak(session_id)
         lapse_summary = get_lapse_summary(session_id)
+        goals = get_user_goals(session_id)
 
         commitments_result = (
             supabase.table("commitments")
@@ -724,16 +822,14 @@ async def dashboard(session_id: str):
         today_due = []
         for c in commitments:
             if is_due_today(c):
-                if c["type"] == "abstain":
-                    s = get_abstinence_streak(c["id"])
-                else:
-                    s = calculate_commitment_streak(c["id"])
+                s = get_abstinence_streak(c["id"]) if c["type"] == "abstain" else calculate_commitment_streak(c["id"])
                 today_due.append({**c, "streak": s})
 
         return {
             "profile": profile,
             "streak_days": streak,
             "lapse_summary": lapse_summary,
+            "goals": goals,
             "todays_commitments": today_due,
             "total_active": len(commitments),
         }
@@ -743,7 +839,6 @@ async def dashboard(session_id: str):
 
 @app.get("/api/chase/{session_id}")
 async def chase(session_id: str):
-    """Return commitments due today that have no log entry yet."""
     try:
         today = str(date.today())
         commitments_result = (
