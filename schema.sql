@@ -49,3 +49,13 @@ CREATE INDEX IF NOT EXISTS idx_goals_active  ON goals (active);
 
 -- link commitments → goals (migration-safe)
 ALTER TABLE commitments ADD COLUMN IF NOT EXISTS goal_id uuid REFERENCES goals (id) ON DELETE SET NULL;
+
+-- user_memories
+CREATE TABLE IF NOT EXISTS user_memories (
+  id          uuid        PRIMARY KEY DEFAULT gen_random_uuid(),
+  session_id  text        NOT NULL,
+  content     text        NOT NULL,
+  created_at  timestamptz DEFAULT now()
+);
+
+CREATE INDEX IF NOT EXISTS idx_memories_session ON user_memories (session_id);

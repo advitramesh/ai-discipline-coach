@@ -4,7 +4,7 @@ import re
 import json
 from datetime import date, datetime, timedelta, timezone
 from dotenv import load_dotenv
-from fastapi import FastAPI, Request, HTTPException
+from fastapi import FastAPI, Request, HTTPException, BackgroundTasks
 from fastapi.middleware.cors import CORSMiddleware
 from supabase import create_client
 import google.generativeai as genai
@@ -50,6 +50,23 @@ conversation_history: dict[str, list] = {}
 onboarding_state: dict[str, int] = {}
 onboarding_data: dict[str, dict] = {}
 
+MEMORY_EXTRACTOR_PROMPT = """You are a memory extractor for a personal discipline coach.
+
+Based on this single exchange, extract ONE important personal fact about the user worth remembering in all future coaching sessions.
+
+Focus on: personal patterns, emotional triggers, life context (job, schedule, relationships), recurring struggles, what motivates them, or meaningful commitments they revealed.
+
+User message: "{user_message}"
+Coach reply: "{coach_reply}"
+
+Rules:
+- Return a single short sentence under 20 words
+- Only return something if genuinely new and meaningful was revealed
+- Do NOT extract things already obvious from the goal or commitment (e.g. "user wants to run daily")
+- If nothing worth remembering was shared, return exactly: none
+
+Response:"""
+
 COACHING_SYSTEM_PROMPT = """You are an elite personal discipline coach specializing in habit formation,
 motivation, and helping people recover from lapses and relapses. You combine
 the science of behavior change with the empathy of a trusted mentor.
@@ -66,6 +83,9 @@ USER CONTEXT:
 - Current streak: {streak_days} days
 - Last check-in: {last_checkin}
 - Recent lapse history: {lapse_summary}
+
+WHAT I KNOW ABOUT THIS PERSON:
+{memory_context}
 
 GOALS (what the user is working towards):
 {goals_context}
@@ -295,6 +315,51 @@ def get_lapse_summary(session_id: str) -> str:
     except Exception as e:
         print(f"Error fetching lapse summary: {e}")
         return "Unknown"
+
+
+# =============================================================================
+# MEMORY HELPERS
+# =============================================================================
+
+def build_memory_context(session_id: str) -> str:
+    try:
+        result = (
+            supabase.table("user_memories")
+            .select("content")
+            .eq("session_id", session_id)
+            .order("created_at", desc=True)
+            .limit(15)
+            .execute()
+        )
+        if not result.data:
+            return "No personal context yet — early session."
+        memories = [r["content"] for r in reversed(result.data)]
+        return "\n".join(f"  - {m}" for m in memories)
+    except Exception as e:
+        print(f"Error fetching memories: {e}")
+        return ""
+
+
+def extract_and_save_memory(session_id: str, user_message: str, coach_reply: str):
+    """Background task — extract a memorable fact from this exchange and save it."""
+    try:
+        prompt = MEMORY_EXTRACTOR_PROMPT.format(
+            user_message=user_message[:600],
+            coach_reply=coach_reply[:600],
+        )
+        reply, _ = call_llm(
+            [{"role": "user", "content": prompt}],
+            "You are a memory extractor. Return only the fact or 'none'.",
+        )
+        fact = reply.strip().strip('"').strip("'")
+        if fact.lower() not in ("none", "") and len(fact) > 8:
+            supabase.table("user_memories").insert({
+                "session_id": session_id,
+                "content": fact,
+            }).execute()
+            print(f"Memory saved [{session_id}]: {fact}")
+    except Exception as e:
+        print(f"Memory extraction failed: {e}")
 
 
 # =============================================================================
@@ -580,7 +645,7 @@ async def health():
 
 
 @app.post("/api/coach")
-async def coach(request: Request):
+async def coach(request: Request, background_tasks: BackgroundTasks):
     data = await request.json()
     session_id = data.get("session_id")
     user_message = data.get("message")
@@ -613,6 +678,7 @@ async def coach(request: Request):
 
     streak = calculate_streak(session_id)
     lapse_summary = get_lapse_summary(session_id)
+    memory_context = build_memory_context(session_id)
     goals_context = build_goals_context(session_id)
     commitments_context = build_commitments_context(session_id)
 
@@ -625,6 +691,7 @@ async def coach(request: Request):
         streak_days=streak,
         last_checkin=last_checkin,
         lapse_summary=lapse_summary,
+        memory_context=memory_context,
         goals_context=goals_context,
         commitments_context=commitments_context,
     )
@@ -640,6 +707,10 @@ async def coach(request: Request):
 
     update_profile_streak(session_id, streak)
     log_chat(session_id, user_message, reply, provider, intent)
+
+    # Extract and save a memory from this exchange in the background
+    if intent not in ("onboarding",):
+        background_tasks.add_task(extract_and_save_memory, session_id, user_message, reply)
 
     return {
         "reply": reply,
@@ -833,6 +904,21 @@ async def dashboard(session_id: str):
             "todays_commitments": today_due,
             "total_active": len(commitments),
         }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/api/memories/{session_id}")
+async def list_memories(session_id: str):
+    try:
+        result = (
+            supabase.table("user_memories")
+            .select("id, content, created_at")
+            .eq("session_id", session_id)
+            .order("created_at", desc=False)
+            .execute()
+        )
+        return {"memories": result.data or []}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
