@@ -43,7 +43,7 @@ MAX_HISTORY = 10
 
 DAY_ABBREVS = {0: 'mon', 1: 'tue', 2: 'wed', 3: 'thu', 4: 'fri', 5: 'sat', 6: 'sun'}
 
-COMMITMENT_TAG_RE = re.compile(r'<commitment>(.*?)</commitment>', re.DOTALL)
+COMMITMENT_TAG_RE = re.compile(r'<commitment[,>]?(.*?)</commitment>', re.DOTALL)
 
 # In-memory stores
 conversation_history: dict[str, list] = {}
